@@ -46,36 +46,28 @@ export function SupplierDialog({ open, supplier, onSubmit, onClose }: SupplierDi
     formState: { errors, isSubmitting },
   } = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
+    defaultValues: { code: '', name: '', contactPerson: '', phone: '', email: '', location: '', taxCode: '', note: '' },
   })
 
   const selectedPaymentTerms = watch('paymentTerms')
 
   useEffect(() => {
     if (open) {
-      reset(
-        supplier
-          ? {
-              code: supplier.code,
-              name: supplier.name,
-              contactPerson: supplier.contactPerson,
-              phone: supplier.phone,
-              email: supplier.email,
-              location: supplier.location,
-              taxCode: supplier.taxCode,
-              paymentTerms: supplier.paymentTerms,
-              note: supplier.note ?? '',
-            }
-          : {
-              code: '',
-              name: '',
-              contactPerson: '',
-              phone: '',
-              email: '',
-              location: '',
-              taxCode: '',
-              note: '',
-            },
-      )
+      if (supplier) {
+        reset({
+          code: supplier.code,
+          name: supplier.name,
+          contactPerson: supplier.contactPerson,
+          phone: supplier.phone,
+          email: supplier.email,
+          location: supplier.location,
+          taxCode: supplier.taxCode,
+          paymentTerms: supplier.paymentTerms,
+          note: supplier.note ?? '',
+        })
+      } else {
+        reset()
+      }
     }
   }, [open, supplier, reset])
 
