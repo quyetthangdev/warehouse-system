@@ -39,6 +39,7 @@ export function DataTable<T>({
     columns,
     state: { globalFilter },
     onGlobalFilterChange: setGlobalFilter,
+    autoResetPageIndex: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -75,9 +76,9 @@ export function DataTable<T>({
           <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {columns.map((_, j) => (
-                    <TableCell key={j}>
+                <TableRow key={`skeleton-row-${i}`}>
+                  {table.getVisibleLeafColumns().map((col) => (
+                    <TableCell key={col.id}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
@@ -86,7 +87,7 @@ export function DataTable<T>({
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={table.getVisibleLeafColumns().length}
                   className="py-8 text-center text-muted-foreground"
                 >
                   Không có dữ liệu
@@ -119,6 +120,7 @@ export function DataTable<T>({
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            aria-label="Trang trước"
           >
             ‹
           </Button>
@@ -127,6 +129,7 @@ export function DataTable<T>({
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            aria-label="Trang sau"
           >
             ›
           </Button>
