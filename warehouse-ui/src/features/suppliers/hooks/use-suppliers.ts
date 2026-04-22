@@ -25,38 +25,53 @@ export function useSuppliers() {
     fetchAll()
   }, [fetchAll])
 
-  async function createSupplier(payload: CreateSupplierRequest): Promise<boolean> {
-    try {
-      await supplierService.create(payload)
-      await fetchAll()
-      return true
-    } catch {
-      return false
-    }
-  }
+  const createSupplier = useCallback(
+    async (payload: CreateSupplierRequest): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await supplierService.create(payload)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể tạo nhà cung cấp'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
-  async function updateSupplier(id: string, payload: UpdateSupplierRequest): Promise<boolean> {
-    try {
-      await supplierService.update(id, payload)
-      await fetchAll()
-      return true
-    } catch {
-      return false
-    }
-  }
+  const updateSupplier = useCallback(
+    async (id: string, payload: UpdateSupplierRequest): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await supplierService.update(id, payload)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể cập nhật nhà cung cấp'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
-  async function removeSupplier(id: string): Promise<{ ok: boolean; message?: string }> {
-    try {
-      await supplierService.remove(id)
-      await fetchAll()
-      return { ok: true }
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể xóa nhà cung cấp'
-      return { ok: false, message }
-    }
-  }
+  const removeSupplier = useCallback(
+    async (id: string): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await supplierService.remove(id)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể xóa nhà cung cấp'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
   return { suppliers, isLoading, error, createSupplier, updateSupplier, removeSupplier }
 }
