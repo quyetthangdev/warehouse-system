@@ -3,6 +3,7 @@ import { notificationHandlers } from './notification.handler'
 import { dashboardHandlers } from './dashboard.handler'
 import { unitHandlers } from './unit.handler'
 import { supplierHandlers } from './supplier.handler'
+import { materialHandlers } from './material.handler'
 
 export const handlers = [
   ...authHandlers,
@@ -10,4 +11,5 @@ export const handlers = [
   ...dashboardHandlers,
   ...unitHandlers,
   ...supplierHandlers,
+  ...materialHandlers,
 ]
