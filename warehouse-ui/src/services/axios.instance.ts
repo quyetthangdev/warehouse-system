@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import type { ApiError } from '@/types/api.types'
+import type { ApiError, ApiResponse } from '@/types/api.types'
 import type { AuthTokens } from '@/types/auth.types'
 
 const BASE_URL = import.meta.env.VITE_API_URL
@@ -33,6 +33,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiError>) => {
+    if (!error.config) return Promise.reject(error)
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
     if (error.response?.status !== 401 || originalRequest._retry) {
@@ -55,16 +56,16 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken')
       if (!refreshToken) throw new Error('No refresh token')
 
-      const { data } = await axios.post<{ tokens: AuthTokens }>(
+      const { data } = await axios.post<ApiResponse<{ tokens: AuthTokens }>>(
         `${BASE_URL}/auth/refresh`,
         { refreshToken },
       )
 
-      localStorage.setItem('accessToken', data.tokens.accessToken)
-      localStorage.setItem('refreshToken', data.tokens.refreshToken)
+      localStorage.setItem('accessToken', data.data.tokens.accessToken)
+      localStorage.setItem('refreshToken', data.data.tokens.refreshToken)
 
-      processQueue(null, data.tokens.accessToken)
-      originalRequest.headers.Authorization = `Bearer ${data.tokens.accessToken}`
+      processQueue(null, data.data.tokens.accessToken)
+      originalRequest.headers.Authorization = `Bearer ${data.data.tokens.accessToken}`
       return api(originalRequest)
     } catch (refreshError) {
       processQueue(refreshError, null)
