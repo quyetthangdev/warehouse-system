@@ -25,38 +25,53 @@ export function useUnits() {
     fetchAll()
   }, [fetchAll])
 
-  async function createUnit(payload: CreateUnitRequest): Promise<boolean> {
-    try {
-      await unitService.create(payload)
-      await fetchAll()
-      return true
-    } catch {
-      return false
-    }
-  }
+  const createUnit = useCallback(
+    async (payload: CreateUnitRequest): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await unitService.create(payload)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể tạo đơn vị'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
-  async function updateUnit(id: string, payload: UpdateUnitRequest): Promise<boolean> {
-    try {
-      await unitService.update(id, payload)
-      await fetchAll()
-      return true
-    } catch {
-      return false
-    }
-  }
+  const updateUnit = useCallback(
+    async (id: string, payload: UpdateUnitRequest): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await unitService.update(id, payload)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể cập nhật đơn vị'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
-  async function removeUnit(id: string): Promise<{ ok: boolean; message?: string }> {
-    try {
-      await unitService.remove(id)
-      await fetchAll()
-      return { ok: true }
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Không thể xóa đơn vị'
-      return { ok: false, message }
-    }
-  }
+  const removeUnit = useCallback(
+    async (id: string): Promise<{ ok: boolean; message?: string }> => {
+      try {
+        await unitService.remove(id)
+        await fetchAll()
+        return { ok: true }
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Không thể xóa đơn vị'
+        return { ok: false, message }
+      }
+    },
+    [fetchAll],
+  )
 
   return { units, isLoading, error, createUnit, updateUnit, removeUnit }
 }

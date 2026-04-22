@@ -55,7 +55,7 @@ export function UnitDialog({ open, unit, onSubmit, onClose }: UnitDialogProps) {
   }, [open, unit, reset])
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && !isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{unit ? 'Sửa đơn vị tính' : 'Thêm đơn vị tính'}</DialogTitle>

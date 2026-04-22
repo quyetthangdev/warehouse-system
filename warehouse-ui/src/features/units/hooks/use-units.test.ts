@@ -21,6 +21,14 @@ const server = setupServer(
       { status: 201 },
     )
   }),
+  http.put('http://localhost:3000/units/:id', async ({ request, params }) => {
+    const body = await request.json() as { name: string; symbol: string; type: string }
+    return HttpResponse.json({
+      statusCode: 200,
+      message: 'OK',
+      data: { id: params.id, ...body },
+    })
+  }),
   http.delete('http://localhost:3000/units/:id', ({ params }) => {
     if (params.id === 'unit-in-use') {
       return HttpResponse.json(
@@ -44,17 +52,27 @@ describe('useUnits', () => {
     expect(result.current.units[0].name).toBe('Kilogram')
   })
 
-  it('createUnit trả về true khi thành công', async () => {
+  it('createUnit trả về ok=true khi thành công', async () => {
     const { result } = renderHook(() => useUnits())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    let ok: boolean
+    let res: { ok: boolean; message?: string }
     await act(async () => {
-      ok = await result.current.createUnit({ name: 'Gram', symbol: 'g', type: 'weight' })
+      res = await result.current.createUnit({ name: 'Gram', symbol: 'g', type: 'weight' })
     })
-    expect(ok!).toBe(true)
+    expect(res!.ok).toBe(true)
   })
 
-  it('removeUnit với id đang dùng trả về ok=false và message', async () => {
+  it('updateUnit trả về ok=true khi thành công', async () => {
+    const { result } = renderHook(() => useUnits())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    let res: { ok: boolean; message?: string }
+    await act(async () => {
+      res = await result.current.updateUnit('unit-001', { name: 'Kilogram cập nhật', symbol: 'kg', type: 'weight' })
+    })
+    expect(res!.ok).toBe(true)
+  })
+
+  it('removeUnit với id đang dùng trả về ok=false và message chính xác', async () => {
     const { result } = renderHook(() => useUnits())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     let res: { ok: boolean; message?: string }
@@ -62,6 +80,6 @@ describe('useUnits', () => {
       res = await result.current.removeUnit('unit-in-use')
     })
     expect(res!.ok).toBe(false)
-    expect(res!.message).toBeTruthy()
+    expect(res!.message).toBe('Đang được sử dụng')
   })
 })

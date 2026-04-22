@@ -73,7 +73,7 @@ export function UnitListPage() {
   )
 
   async function handleSubmit(values: UnitFormValues) {
-    const ok = editUnit
+    const { ok, message } = editUnit
       ? await updateUnit(editUnit.id, values)
       : await createUnit(values)
     if (ok) {
@@ -81,7 +81,7 @@ export function UnitListPage() {
       setDialogOpen(false)
       setEditUnit(undefined)
     } else {
-      toast.error('Có lỗi xảy ra, thử lại sau')
+      toast.error(message ?? 'Có lỗi xảy ra, thử lại sau')
     }
   }
 
