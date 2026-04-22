@@ -1,6 +1,15 @@
 import { http, HttpResponse } from 'msw'
 import type { ApiResponse } from '@/types/api.types'
 import type { Material } from '@/features/materials/types/material.types'
+import type { Unit } from '@/features/units/types/unit.types'
+
+const seedUnits: Unit[] = [
+  { id: 'unit-001', name: 'Kilogram', symbol: 'kg', type: 'weight' },
+  { id: 'unit-002', name: 'Gram', symbol: 'g', type: 'weight' },
+  { id: 'unit-003', name: 'Lít', symbol: 'l', type: 'volume' },
+  { id: 'unit-004', name: 'Mililít', symbol: 'ml', type: 'volume' },
+  { id: 'unit-005', name: 'Cái', symbol: 'cái', type: 'quantity' },
+]
 
 const BASE_URL = 'http://localhost:3000'
 
@@ -68,7 +77,8 @@ export const materialHandlers = [
       ...body,
       id: `mat-${Date.now()}`,
       code,
-      baseUnit: { id: body.baseUnitId, name: 'Đơn vị', symbol: '-', type: 'quantity' },
+      baseUnit: seedUnits.find((u) => u.id === body.baseUnitId)
+        ?? { id: body.baseUnitId, name: 'Đơn vị', symbol: '-', type: 'quantity' },
       isActive: true,
     }
     materials = [...materials, newMaterial]
