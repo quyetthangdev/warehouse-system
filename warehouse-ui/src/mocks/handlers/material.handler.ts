@@ -84,7 +84,7 @@ export const materialHandlers = [
         { status: 404 },
       )
     }
-    const body = await request.json() as Partial<Material>
+    const body = await request.json() as CreateMaterialBody
     materials = materials.map((m) => (m.id === params.id ? { ...m, ...body } : m))
     const updated = materials.find((m) => m.id === params.id)!
     const response: ApiResponse<Material> = { statusCode: 200, message: 'Cập nhật thành công', data: updated }
@@ -92,7 +92,7 @@ export const materialHandlers = [
   }),
 
   http.delete(`${BASE_URL}/materials/:id`, ({ params }) => {
-    if (params.id === 'material-in-use') {
+    if (params.id === 'mat-in-use') {
       return HttpResponse.json(
         { statusCode: 409, message: 'Nguyên vật liệu đang được sử dụng, không thể xóa' },
         { status: 409 },
