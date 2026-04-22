@@ -78,7 +78,15 @@ export function MaterialDialog({
           supplierIds: material.supplierIds,
         })
       } else {
-        reset()
+        reset({
+          name: '',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          category: undefined as any,
+          baseUnitId: '',
+          minimumInventory: 0,
+          maximumInventory: 0,
+          supplierIds: [],
+        })
       }
     }
   }, [open, material, reset])
@@ -250,7 +258,7 @@ export function MaterialDialog({
               {availableSuppliers.length > 0 && (
                 <div className="space-y-1">
                   <Label>Thêm nhà cung cấp</Label>
-                  <Select onValueChange={(v) => addSupplier(v)}>
+                  <Select key={supplierIds.length} onValueChange={(v) => addSupplier(v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn nhà cung cấp để thêm..." />
                     </SelectTrigger>
