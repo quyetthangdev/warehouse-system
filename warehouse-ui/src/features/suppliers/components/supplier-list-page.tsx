@@ -34,8 +34,8 @@ export function SupplierListPage() {
 
   const columns = useMemo<ColumnDef<Supplier>[]>(
     () => [
-      { accessorKey: 'code', header: 'Mã NCC' },
-      { accessorKey: 'name', header: 'Tên nhà cung cấp' },
+      { accessorKey: 'code', header: 'Mã' },
+      { accessorKey: 'name', header: 'Tên' },
       { accessorKey: 'contactPerson', header: 'Người liên hệ' },
       { accessorKey: 'phone', header: 'Điện thoại' },
       { accessorKey: 'email', header: 'Email' },
