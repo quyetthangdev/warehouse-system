@@ -27,6 +27,13 @@ export const unitHandlers = [
   }),
 
   http.put(`${BASE_URL}/units/:id`, async ({ request, params }) => {
+    const exists = units.some((u) => u.id === params.id)
+    if (!exists) {
+      return HttpResponse.json(
+        { statusCode: 404, message: 'Không tìm thấy đơn vị' },
+        { status: 404 },
+      )
+    }
     const body = await request.json() as Omit<Unit, 'id'>
     units = units.map((u) => (u.id === params.id ? { ...u, ...body } : u))
     const updated = units.find((u) => u.id === params.id)!

@@ -5,6 +5,7 @@ export const unitSchema = z.object({
   symbol: z.string().min(1, 'Ký hiệu không được để trống'),
   type: z.enum(['weight', 'volume', 'quantity'], {
     required_error: 'Chọn loại đơn vị',
+    invalid_type_error: 'Loại đơn vị không hợp lệ',
   }),
 })
 
