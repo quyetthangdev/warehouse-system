@@ -1,5 +1,5 @@
 // warehouse-ui/src/features/units/components/unit-list-page.tsx
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
@@ -21,54 +21,56 @@ const typeLabel: Record<string, string> = {
 
 export function UnitListPage() {
   const { units, isLoading, createUnit, updateUnit, removeUnit } = useUnits()
-  const hasPermission = useAuthStore((s) => s.hasPermission)
-  const canEdit = hasPermission(['admin', 'manager'])
-  const canDelete = hasPermission(['admin'])
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canDelete = useAuthStore((s) => s.hasPermission(['admin']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editUnit, setEditUnit] = useState<Unit | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Unit | undefined>()
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const columns: ColumnDef<Unit>[] = [
-    { accessorKey: 'name', header: 'Tên đơn vị' },
-    { accessorKey: 'symbol', header: 'Ký hiệu' },
-    {
-      accessorKey: 'type',
-      header: 'Loại',
-      cell: ({ row }) => typeLabel[row.original.type] ?? row.original.type,
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-2">
-          {canEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditUnit(row.original)
-                setDialogOpen(true)
-              }}
-            >
-              Sửa
-            </Button>
-          )}
-          {canDelete && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setDeleteTarget(row.original)}
-            >
-              Xóa
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ]
+  const columns = useMemo<ColumnDef<Unit>[]>(
+    () => [
+      { accessorKey: 'name', header: 'Tên đơn vị' },
+      { accessorKey: 'symbol', header: 'Ký hiệu' },
+      {
+        accessorKey: 'type',
+        header: 'Loại',
+        cell: ({ row }) => typeLabel[row.original.type] ?? row.original.type,
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-2">
+            {canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditUnit(row.original)
+                  setDialogOpen(true)
+                }}
+              >
+                Sửa
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteTarget(row.original)}
+              >
+                Xóa
+              </Button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [canEdit, canDelete],
+  )
 
   async function handleSubmit(values: UnitFormValues) {
     const ok = editUnit

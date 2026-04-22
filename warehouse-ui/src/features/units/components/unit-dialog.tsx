@@ -39,17 +39,18 @@ export function UnitDialog({ open, unit, onSubmit, onClose }: UnitDialogProps) {
     formState: { errors, isSubmitting },
   } = useForm<UnitFormValues>({
     resolver: zodResolver(unitSchema),
+    defaultValues: { name: '', symbol: '' },
   })
 
   const selectedType = watch('type')
 
   useEffect(() => {
     if (open) {
-      reset(
-        unit
-          ? { name: unit.name, symbol: unit.symbol, type: unit.type }
-          : { name: '', symbol: '' },
-      )
+      if (unit) {
+        reset({ name: unit.name, symbol: unit.symbol, type: unit.type })
+      } else {
+        reset()
+      }
     }
   }, [open, unit, reset])
 
