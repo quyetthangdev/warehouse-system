@@ -1,0 +1,10 @@
+{
+  "name": "warehouse-system",
+  "private": true,
+  "workspaces": ["warehouse-ui"],
+  "scripts": {
+    "ui:dev": "npm run dev --workspace=warehouse-ui",
+    "ui:build": "npm run build --workspace=warehouse-ui",
+    "ui:test": "npm run test --workspace=warehouse-ui"
+  }
+}
