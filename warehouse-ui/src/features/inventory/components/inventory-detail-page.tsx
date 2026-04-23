@@ -1,10 +1,19 @@
 // src/features/inventory/components/inventory-detail-page.tsx
-import { useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { DataTable } from '@/components/common/data-table'
 import { PageContainer } from '@/components/layout/page-container'
 import { toast } from 'sonner'
@@ -94,6 +103,10 @@ export function InventoryDetailPage() {
   const navigate = useNavigate()
   const { detail, isLoading, error } = useInventoryDetail(materialId ?? '')
 
+  // Fix 3 — date range filter state
+  const [dateFrom, setDateFrom] = useState<string>('')
+  const [dateTo, setDateTo] = useState<string>('')
+
   // toast survives component unmount via portal; navigate fires immediately after
   useEffect(() => {
     if (error) {
@@ -101,6 +114,16 @@ export function InventoryDetailPage() {
       navigate('/inventory')
     }
   }, [error, navigate])
+
+  // Fix 3 — filtered movement chart
+  const filteredChart = useMemo(() => {
+    if (!detail) return []
+    return detail.movementChart.filter((p) => {
+      if (dateFrom && p.date < dateFrom) return false
+      if (dateTo && p.date > dateTo) return false
+      return true
+    })
+  }, [detail, dateFrom, dateTo])
 
   if (isLoading) {
     return (
@@ -128,6 +151,21 @@ export function InventoryDetailPage() {
   return (
     <PageContainer>
       <div className="space-y-4">
+        {/* Fix 2 — Breadcrumb: Tồn kho > [Tên NVL] */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/inventory">Tồn kho</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{detail.materialName}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <div className="flex flex-wrap items-center gap-3">
           <div>
             <h1 className="text-xl font-semibold">{detail.materialName}</h1>
@@ -155,12 +193,41 @@ export function InventoryDetailPage() {
               <p className="mb-4 text-sm font-medium">
                 Biến động nhập/xuất/kiểm 30 ngày gần nhất
               </p>
-              {detail.movementChart.length === 0 ? (
+
+              {/* Fix 3 — Date range filter */}
+              <div className="mb-4 flex flex-wrap gap-4">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="date-from" className="text-xs text-muted-foreground">
+                    Từ ngày
+                  </label>
+                  <Input
+                    id="date-from"
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="date-to" className="text-xs text-muted-foreground">
+                    Đến ngày
+                  </label>
+                  <Input
+                    id="date-to"
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+              </div>
+
+              {filteredChart.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
                   Chưa có dữ liệu biến động
                 </p>
               ) : (
-                <StockMovementChart data={detail.movementChart} />
+                <StockMovementChart data={filteredChart} />
               )}
             </div>
           </TabsContent>

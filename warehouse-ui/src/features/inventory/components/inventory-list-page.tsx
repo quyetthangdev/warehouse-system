@@ -1,8 +1,9 @@
 // src/features/inventory/components/inventory-list-page.tsx
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ChevronDown, Check } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
@@ -10,7 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataTable } from '@/components/common/data-table'
 import { PageContainer } from '@/components/layout/page-container'
@@ -29,20 +36,38 @@ const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
 ]
 
 export function InventoryListPage() {
-  const { items, isLoading } = useInventory()
+  const { items, isLoading, error } = useInventory()
   const navigate = useNavigate()
 
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([])
+
+  // Fix 4 — surface hook errors via toast
+  useEffect(() => {
+    if (error) toast.error(error)
+  }, [error])
+
+  // Derive unique supplier names from loaded items
+  const supplierOptions = useMemo<string[]>(() => {
+    const set = new Set<string>()
+    items.forEach((item) => item.supplierNames.forEach((s) => set.add(s)))
+    return Array.from(set).sort()
+  }, [items])
 
   const filtered = useMemo(
     () =>
       items.filter((item) => {
         if (categoryFilter !== 'all' && item.category !== categoryFilter) return false
         if (statusFilter !== 'all' && item.status !== statusFilter) return false
+        if (
+          selectedSuppliers.length > 0 &&
+          !item.supplierNames.some((s) => selectedSuppliers.includes(s))
+        )
+          return false
         return true
       }),
-    [items, categoryFilter, statusFilter],
+    [items, categoryFilter, statusFilter, selectedSuppliers],
   )
 
   const stats = useMemo(
@@ -102,6 +127,17 @@ export function InventoryListPage() {
     [navigate],
   )
 
+  function toggleSupplier(supplier: string) {
+    setSelectedSuppliers((prev) =>
+      prev.includes(supplier) ? prev.filter((s) => s !== supplier) : [...prev, supplier],
+    )
+  }
+
+  const supplierButtonLabel =
+    selectedSuppliers.length === 0
+      ? 'Nhà cung cấp'
+      : `Nhà cung cấp (${selectedSuppliers.length})`
+
   return (
     <PageContainer>
       <div className="space-y-4">
@@ -143,6 +179,56 @@ export function InventoryListPage() {
             </SelectContent>
           </Select>
 
+          {/* Fix 1 — Supplier multi-select filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-52 justify-between font-normal">
+                <span>{supplierButtonLabel}</span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-2">
+              {supplierOptions.length === 0 ? (
+                <p className="py-2 text-center text-sm text-muted-foreground">Không có dữ liệu</p>
+              ) : (
+                <ul className="max-h-60 overflow-y-auto space-y-1">
+                  {supplierOptions.map((supplier) => {
+                    const checked = selectedSuppliers.includes(supplier)
+                    return (
+                      <li key={supplier}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSupplier(supplier)}
+                          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted text-left"
+                        >
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                              checked ? 'bg-primary border-primary text-primary-foreground' : 'border-input'
+                            }`}
+                          >
+                            {checked && <Check className="h-3 w-3" />}
+                          </span>
+                          <span className="truncate">{supplier}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+              {selectedSuppliers.length > 0 && (
+                <div className="mt-1 border-t pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSuppliers([])}
+                    className="w-full rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted text-left"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Trạng thái" />
@@ -162,6 +248,7 @@ export function InventoryListPage() {
           data={filtered}
           isLoading={isLoading}
           searchPlaceholder="Tìm theo tên hoặc mã NVL..."
+          emptyMessage="Chưa có dữ liệu tồn kho"
         />
       </div>
     </PageContainer>

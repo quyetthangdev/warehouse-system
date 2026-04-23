@@ -24,6 +24,7 @@ interface DataTableProps<T> {
   data: T[]
   isLoading?: boolean
   searchPlaceholder?: string
+  emptyMessage?: string
 }
 
 export function DataTable<T>({
@@ -31,6 +32,7 @@ export function DataTable<T>({
   data,
   isLoading,
   searchPlaceholder = 'Tìm kiếm...',
+  emptyMessage = 'Không có dữ liệu',
 }: DataTableProps<T>) {
   const [globalFilter, setGlobalFilter] = useState('')
 
@@ -90,7 +92,7 @@ export function DataTable<T>({
                   colSpan={table.getVisibleLeafColumns().length}
                   className="py-8 text-center text-muted-foreground"
                 >
-                  Không có dữ liệu
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
