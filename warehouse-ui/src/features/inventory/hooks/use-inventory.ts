@@ -14,8 +14,11 @@ export function useInventory() {
     try {
       const { data: res } = await api.get<ApiResponse<InventoryItem[]>>('/inventory')
       setItems(res.data)
-    } catch {
-      setError('Không thể tải dữ liệu tồn kho')
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Không thể tải dữ liệu tồn kho'
+      setError(message)
     } finally {
       setIsLoading(false)
     }

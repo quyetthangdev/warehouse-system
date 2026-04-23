@@ -75,7 +75,7 @@ describe('useInventoryDetail', () => {
   it('sets error for unknown materialId (404)', async () => {
     const { result } = renderHook(() => useInventoryDetail('mat-999'))
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.error).not.toBeNull()
+    expect(result.current.error).toBe('Không tìm thấy nguyên vật liệu')
     expect(result.current.detail).toBeNull()
   })
 })

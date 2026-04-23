@@ -9,6 +9,7 @@ export function useInventoryDetail(materialId: string) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchDetail = useCallback(async () => {
+    if (!materialId) return
     setIsLoading(true)
     setError(null)
     try {
