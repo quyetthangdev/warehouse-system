@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { AppSidebar } from './app-sidebar'
 import { AppHeader } from './app-header'
+import { AppBreadcrumb } from './app-breadcrumb'
 
 export function RootLayout() {
   return (
@@ -8,7 +9,10 @@ export function RootLayout() {
       <AppSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <AppHeader />
-        <main className="flex-1 overflow-auto">
+        <div className="bg-background px-6 py-2">
+          <AppBreadcrumb />
+        </div>
+        <main className="flex-1 overflow-auto bg-muted/40">
           <Outlet />
         </main>
       </div>
