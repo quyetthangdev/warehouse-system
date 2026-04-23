@@ -58,7 +58,7 @@ export function FilterDropdown({ onApply, triggerClassName }: FilterDropdownProp
         <p className="mb-3 text-sm font-medium">Tần suất</p>
 
         <Select value={frequency} onValueChange={handleFrequencyChange}>
-          <SelectTrigger className="mb-4 h-9 text-sm">
+          <SelectTrigger className="mb-4 h-9 w-full text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
