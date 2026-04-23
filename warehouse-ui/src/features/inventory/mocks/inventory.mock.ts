@@ -15,6 +15,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'low',
     supplierNames: ['Công ty TNHH Rau Quả Tươi'],
     nearExpiryBatchCount: 1,
+    batchCount: 1,
+    nearestExpiryDate: '2026-05-01',
   },
   {
     materialId: 'mat-002',
@@ -29,6 +31,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'normal',
     supplierNames: ['Công ty CP Đường Biên Hòa'],
     nearExpiryBatchCount: 0,
+    batchCount: 2,
+    nearestExpiryDate: '2026-09-15',
   },
   {
     materialId: 'mat-003',
@@ -43,6 +47,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'out',
     supplierNames: ['Vinamilk'],
     nearExpiryBatchCount: 0,
+    batchCount: 0,
+    nearestExpiryDate: null,
   },
   {
     materialId: 'mat-004',
@@ -57,6 +63,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'high',
     supplierNames: ['Dalat Farm Coffee', 'Công ty CP Trung Nguyên'],
     nearExpiryBatchCount: 0,
+    batchCount: 3,
+    nearestExpiryDate: '2026-11-20',
   },
   {
     materialId: 'mat-005',
@@ -71,6 +79,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'normal',
     supplierNames: ['HTX Chè Thái Nguyên'],
     nearExpiryBatchCount: 0,
+    batchCount: 2,
+    nearestExpiryDate: '2026-07-30',
   },
   {
     materialId: 'mat-006',
@@ -85,6 +95,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'low',
     supplierNames: ['Bao Bì Xanh Co.'],
     nearExpiryBatchCount: 0,
+    batchCount: 1,
+    nearestExpiryDate: null,
   },
   {
     materialId: 'mat-007',
@@ -99,6 +111,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'normal',
     supplierNames: ['Bao Bì Xanh Co.'],
     nearExpiryBatchCount: 0,
+    batchCount: 2,
+    nearestExpiryDate: null,
   },
   {
     materialId: 'mat-008',
@@ -113,6 +127,8 @@ export const mockInventoryItems: InventoryItem[] = [
     status: 'low',
     supplierNames: ['Vườn Rau Hữu Cơ Đà Lạt'],
     nearExpiryBatchCount: 2,
+    batchCount: 2,
+    nearestExpiryDate: '2026-04-30',
   },
 ]
 

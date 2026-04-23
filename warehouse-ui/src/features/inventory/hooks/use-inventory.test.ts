@@ -19,6 +19,8 @@ const mockItems: InventoryItem[] = [
     status: 'low',
     supplierNames: ['Công ty TNHH Rau Quả Tươi'],
     nearExpiryBatchCount: 1,
+    batchCount: 1,
+    nearestExpiryDate: '2026-05-01',
   },
   {
     materialId: 'mat-002',
@@ -33,6 +35,8 @@ const mockItems: InventoryItem[] = [
     status: 'normal',
     supplierNames: ['Công ty CP Đường Biên Hòa'],
     nearExpiryBatchCount: 0,
+    batchCount: 2,
+    nearestExpiryDate: '2026-09-15',
   },
 ]
 

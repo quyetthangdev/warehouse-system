@@ -18,6 +18,8 @@ const mockDetail: InventoryDetail = {
   status: 'low',
   supplierNames: ['Công ty TNHH Rau Quả Tươi'],
   nearExpiryBatchCount: 1,
+  batchCount: 1,
+  nearestExpiryDate: '2026-05-01',
   movementChart: [{ date: '2026-04-01', import: 30, export: 15, balance: 0 }],
   transactions: [
     {

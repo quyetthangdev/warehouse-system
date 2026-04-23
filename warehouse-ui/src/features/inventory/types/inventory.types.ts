@@ -17,6 +17,8 @@ export interface InventoryItem {
   status: StockStatus
   supplierNames: string[]
   nearExpiryBatchCount: number
+  batchCount: number
+  nearestExpiryDate: string | null
 }
 
 export interface StockTransaction {

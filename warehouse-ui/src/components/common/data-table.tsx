@@ -25,6 +25,7 @@ interface DataTableProps<T> {
   isLoading?: boolean
   searchPlaceholder?: string
   emptyMessage?: string
+  hideSearch?: boolean
 }
 
 export function DataTable<T>({
@@ -33,6 +34,7 @@ export function DataTable<T>({
   isLoading,
   searchPlaceholder = 'Tìm kiếm...',
   emptyMessage = 'Không có dữ liệu',
+  hideSearch = false,
 }: DataTableProps<T>) {
   const [globalFilter, setGlobalFilter] = useState('')
 
@@ -55,12 +57,14 @@ export function DataTable<T>({
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder={searchPlaceholder}
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        className="max-w-sm"
-      />
+      {!hideSearch && (
+        <Input
+          placeholder={searchPlaceholder}
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className="max-w-sm"
+        />
+      )}
 
       <div className="rounded-md border">
         <Table>
