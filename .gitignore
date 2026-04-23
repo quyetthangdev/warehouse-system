@@ -3,3 +3,10 @@ package-lock.json
 .DS_Store
 *.local
 *.tsbuildinfo
+
+# AI tooling
+.superpowers/
+
+# Binary assets & local docs
+docs/*.png
+warehouse-ui/docs/

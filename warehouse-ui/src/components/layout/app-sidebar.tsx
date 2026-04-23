@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Archive, ArrowDownToLine,
   ArrowUpFromLine, ClipboardList, Wallet, BarChart3,
-  Settings, Users, ChevronLeft,
+  Settings, Users, ChevronLeft, Ruler, Truck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUiStore } from '@/stores/ui.store'
@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/materials', icon: Package, label: 'Nguyên vật liệu' },
+  { to: '/units', icon: Ruler, label: 'Đơn vị tính' },
+  { to: '/suppliers', icon: Truck, label: 'Nhà cung cấp' },
   { to: '/inventory', icon: Archive, label: 'Tồn kho' },
   { to: '/import-forms', icon: ArrowDownToLine, label: 'Nhập kho' },
   { to: '/export-forms', icon: ArrowUpFromLine, label: 'Xuất kho' },
@@ -27,7 +29,7 @@ const adminItems = [
 
 export function AppSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUiStore()
-  const hasPermission = useAuthStore((s) => s.hasPermission)
+  const canAdmin = useAuthStore((s) => s.hasPermission(['admin']))
 
   return (
     <aside
@@ -66,7 +68,7 @@ export function AppSidebar() {
           ))}
         </ul>
 
-        {hasPermission(['admin']) && (
+        {canAdmin && (
           <div className="mt-4 px-2">
             {!sidebarCollapsed && (
               <p className="mb-1 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">

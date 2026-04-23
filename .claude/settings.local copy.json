@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"/Users/phanquyetthang/mobile-movie-app/app/\\(tabs\\)/menu/\")",
+      "Bash(ls -la \"/Users/phanquyetthang/mobile-movie-app/app/\\(tabs\\)/menu/product/\")",
+      "Bash(grep -n \"useOrderFlowMenuItemControl\" stores/selectors/*.ts)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"estimatedItemSize\\\\|overrideItemLayout\" /Users/phanquyetthang/mobile-movie-app/node_modules/@shopify/flash-list/src --include=*.ts --include=*.tsx -l)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}

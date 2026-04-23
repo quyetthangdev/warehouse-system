@@ -1,6 +1,5 @@
-import { Bell } from 'lucide-react'
+import { Bell, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,7 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useAuthStore } from '@/stores/auth.store'
-
 export function AppHeader() {
   const { resolvedTheme, setTheme } = useTheme()
   const user = useAuthStore((s) => s.user)

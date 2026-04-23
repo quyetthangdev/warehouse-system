@@ -1,15 +1,22 @@
 import { useEffect } from 'react'
-import { Package, TrendingDown, Clock, XCircle } from 'lucide-react'
+import { Package, BarChart2, AlertTriangle, Clock, Search, Download } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { FilterDropdown } from '@/components/common/filter-dropdown'
 import { api } from '@/services/axios.instance'
 import { useNotificationStore } from '@/stores/notification.store'
 import type { ApiResponse } from '@/types/api.types'
 import type { Notification } from '@/stores/notification.store'
 import { useDashboard } from '../hooks/use-dashboard'
 import { StatsCard } from './stats-card'
-import { AlertPanel } from './alert-panel'
 import { CostChart } from './cost-chart'
+
+function formatVnd(value: number) {
+  return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
+}
 
 export function DashboardPage() {
   const { data, isLoading, error, refetch } = useDashboard()
@@ -26,12 +33,9 @@ export function DashboardPage() {
     return (
       <PageContainer>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-lg" />
-            ))}
-          </div>
-          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="h-24 rounded-md" />
+          <Skeleton className="h-64 rounded-md" />
+          <Skeleton className="h-64 rounded-md" />
         </div>
       </PageContainer>
     )
@@ -40,7 +44,7 @@ export function DashboardPage() {
   if (error) {
     return (
       <PageContainer>
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}{' '}
           <button onClick={refetch} className="underline">
             Thử lại
@@ -50,48 +54,97 @@ export function DashboardPage() {
     )
   }
 
-  const { stats, costChart } = data!
+  const { stats, importChart, exportChart, inventory } = data!
 
   return (
     <PageContainer>
-      <div className="space-y-6">
-        <h1 className="text-xl font-semibold">Dashboard</h1>
+      <div className="space-y-4">
+        {/* Filter bar */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Đang lọc theo</span>
+          <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-xs font-normal">
+            Giá trị lọc
+          </Badge>
+        </div>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {/* Stats row */}
+        <div className="grid grid-cols-4 gap-4">
           <StatsCard
-            title="Tổng nguyên vật liệu"
+            title="Tổng số nguyên vật liệu"
             value={stats.totalMaterials}
             icon={Package}
+            iconColor="orange"
           />
           <StatsCard
-            title="Tồn kho thấp"
+            title="Tổng giá trị tồn kho"
+            value={formatVnd(stats.totalStockValue)}
+            icon={BarChart2}
+            iconColor="green"
+          />
+          <StatsCard
+            title="Số NVL tồn thấp"
             value={stats.lowStockCount}
-            icon={TrendingDown}
-            variant={stats.lowStockCount > 0 ? 'warning' : 'default'}
-            description="nguyên vật liệu dưới mức tối thiểu"
+            icon={AlertTriangle}
+            iconColor="orange"
           />
           <StatsCard
-            title="Sắp hết hạn"
+            title="Số NVL sắp hết hạn"
             value={stats.nearExpiryCount}
             icon={Clock}
-            variant={stats.nearExpiryCount > 0 ? 'warning' : 'default'}
-            description="còn dưới 30 ngày"
-          />
-          <StatsCard
-            title="Hết hàng"
-            value={stats.outOfStockCount}
-            icon={XCircle}
-            variant={stats.outOfStockCount > 0 ? 'danger' : 'default'}
+            iconColor="orange"
           />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <CostChart data={costChart} />
+        {/* Import chart — with Tần suất filter shown by default */}
+        <CostChart title="Biểu đồ nhập kho" data={importChart} />
+
+        {/* Export chart */}
+        <CostChart title="Biểu đồ xuất kho" data={exportChart} />
+
+        {/* Inventory table */}
+        <div className="rounded-md border bg-card">
+          <div className="p-4">
+            <p className="mb-4 text-sm font-medium">Danh sách tồn kho</p>
+            <div className="mb-4 flex items-center gap-2">
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <Input placeholder="Tìm kiếm..." className="pl-8" />
+              </div>
+              <div className="ml-auto flex gap-2">
+                <FilterDropdown />
+                <Button variant="outline" size="sm">
+                  <Download />
+                  Xuất file
+                </Button>
+              </div>
+            </div>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="pb-3 text-left font-medium text-muted-foreground">NVL</th>
+                  <th className="pb-3 text-left font-medium text-muted-foreground">Lô</th>
+                  <th className="pb-3 text-left font-medium text-muted-foreground">HSD</th>
+                  <th className="pb-3 text-left font-medium text-muted-foreground">Số lượng còn</th>
+                  <th className="pb-3 text-left font-medium text-muted-foreground">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inventory.map((item, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    <td className="py-3">{item.name}</td>
+                    <td className="py-3">{item.batch}</td>
+                    <td className="py-3">{item.expiryDate}</td>
+                    <td className="py-3">{item.remaining}</td>
+                    <td className="py-3">{item.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <AlertPanel />
         </div>
       </div>
+
     </PageContainer>
   )
 }
