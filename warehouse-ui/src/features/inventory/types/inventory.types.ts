@@ -1,4 +1,6 @@
 // src/features/inventory/types/inventory.types.ts
+import type { MaterialCategory } from '@/features/materials/types/material.types'
+
 export type StockStatus = 'out' | 'low' | 'normal' | 'high'
 export type TransactionType = 'import' | 'export' | 'balance'
 
@@ -6,8 +8,8 @@ export interface InventoryItem {
   materialId: string
   materialCode: string
   materialName: string
-  category: string
-  unit: string
+  category: MaterialCategory
+  unit: string // denormalized symbol (e.g. "kg", "l") — not a unit id
   currentStock: number
   stockValue: number
   minThreshold: number
