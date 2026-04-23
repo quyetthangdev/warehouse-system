@@ -123,12 +123,13 @@ function makeDateLabel(daysAgo: number): string {
 }
 
 function makeMovementChart(): MovementPoint[] {
-  return Array.from({ length: 30 }, (_, i) => ({
-    date: makeDateLabel(29 - i),
-    import: Math.floor(Math.random() * 50),
-    export: Math.floor(Math.random() * 30),
-    balance: 0,
-  }))
+  let running = 50
+  return Array.from({ length: 30 }, (_, i) => {
+    const imp = Math.floor(Math.random() * 50)
+    const exp = Math.floor(Math.random() * 30)
+    running = Math.max(0, running + imp - exp)
+    return { date: makeDateLabel(29 - i), import: imp, export: exp, balance: running }
+  })
 }
 
 export const mockInventoryDetail: InventoryDetail = {
