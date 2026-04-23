@@ -15,15 +15,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DataTable } from '@/components/common/data-table'
 import { PageContainer } from '@/components/layout/page-container'
 import { useInventory } from '../hooks/use-inventory'
+import { StatCard } from './stat-card'
 import type { InventoryItem, StockStatus } from '../types/inventory.types'
+import type { MaterialCategory } from '@/features/materials/types/material.types'
 
-const categoryLabel: Record<string, string> = {
-  main_ingredient: 'Nguyên liệu chính',
-  supporting: 'Hỗ trợ',
-  packaging: 'Bao bì',
-  consumable: 'Tiêu hao',
-  spare_part: 'Phụ tùng',
-}
+const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
+  { value: 'main_ingredient', label: 'Nguyên liệu chính' },
+  { value: 'supporting', label: 'Nguyên liệu phụ' },
+  { value: 'packaging', label: 'Bao bì' },
+  { value: 'consumable', label: 'Vật tư tiêu hao' },
+  { value: 'spare_part', label: 'Phụ tùng' },
+]
 
 const statusConfig: Record<
   StockStatus,
@@ -37,16 +39,6 @@ const statusConfig: Record<
 
 const formatVnd = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
-    </div>
-  )
-}
 
 export function InventoryListPage() {
   const { items, isLoading } = useInventory()
@@ -82,7 +74,7 @@ export function InventoryListPage() {
       {
         accessorKey: 'category',
         header: 'Loại',
-        cell: ({ row }) => categoryLabel[row.original.category] ?? row.original.category,
+        cell: ({ row }) => CATEGORY_OPTIONS.find(o => o.value === row.original.category)?.label ?? row.original.category,
       },
       { accessorKey: 'unit', header: 'Đơn vị' },
       {
@@ -101,7 +93,7 @@ export function InventoryListPage() {
         accessorKey: 'status',
         header: 'Trạng thái',
         cell: ({ row }) => {
-          const cfg = statusConfig[row.original.status]
+          const cfg = statusConfig[row.original.status] ?? { label: row.original.status, variant: 'outline' as const }
           return <Badge variant={cfg.variant}>{cfg.label}</Badge>
         },
       },
@@ -134,15 +126,15 @@ export function InventoryListPage() {
             ))
           ) : (
             <>
-              <StatCard label="Tổng nguyên vật liệu" value={stats.total} sub="loại" />
-              <StatCard label="Tổng giá trị tồn" value={formatVnd(stats.totalValue)} />
+              <StatCard title="Tổng nguyên vật liệu" value={stats.total} sub="loại" />
+              <StatCard title="Tổng giá trị tồn" value={formatVnd(stats.totalValue)} />
               <StatCard
-                label="Tồn thấp / hết hàng"
+                title="Tồn thấp / hết hàng"
                 value={stats.lowCount}
                 sub="loại cần bổ sung"
               />
               <StatCard
-                label="Lô sắp hết hạn"
+                title="Lô sắp hết hạn"
                 value={stats.nearExpiryCount}
                 sub="trong 30 ngày"
               />
@@ -157,11 +149,9 @@ export function InventoryListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả loại</SelectItem>
-              <SelectItem value="main_ingredient">Nguyên liệu chính</SelectItem>
-              <SelectItem value="supporting">Hỗ trợ</SelectItem>
-              <SelectItem value="packaging">Bao bì</SelectItem>
-              <SelectItem value="consumable">Tiêu hao</SelectItem>
-              <SelectItem value="spare_part">Phụ tùng</SelectItem>
+              {CATEGORY_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

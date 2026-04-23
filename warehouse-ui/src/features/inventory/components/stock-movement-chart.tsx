@@ -16,6 +16,13 @@ interface StockMovementChartProps {
   data: MovementPoint[]
 }
 
+// Recharts requires concrete color strings; CSS variables cannot be used directly
+const SERIES = [
+  { key: 'import' as const, label: 'Nhập kho', color: '#22c55e' },
+  { key: 'export' as const, label: 'Xuất kho', color: '#f97316' },
+  { key: 'balance' as const, label: 'Tồn kho', color: '#3b82f6' },
+]
+
 function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   return (
@@ -29,12 +36,6 @@ function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) 
     </div>
   )
 }
-
-const SERIES = [
-  { key: 'import' as const, label: 'Nhập kho', color: '#22c55e' },
-  { key: 'export' as const, label: 'Xuất kho', color: '#f97316' },
-  { key: 'balance' as const, label: 'Tồn kho', color: '#3b82f6' },
-]
 
 export function StockMovementChart({ data }: StockMovementChartProps) {
   return (

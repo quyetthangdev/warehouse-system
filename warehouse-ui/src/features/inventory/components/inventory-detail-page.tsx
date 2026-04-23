@@ -10,6 +10,7 @@ import { PageContainer } from '@/components/layout/page-container'
 import { toast } from 'sonner'
 import { useInventoryDetail } from '../hooks/use-inventory-detail'
 import { StockMovementChart } from './stock-movement-chart'
+import { StatCard } from './stat-card'
 import type { StockTransaction, StockBatch, StockStatus, TransactionType } from '../types/inventory.types'
 
 const statusConfig: Record<
@@ -23,20 +24,19 @@ const statusConfig: Record<
 }
 
 const txTypeConfig: Record<TransactionType, { label: string; className: string }> = {
-  import: { label: 'Nhập kho', className: 'text-green-600 bg-green-50 border-green-200' },
-  export: { label: 'Xuất kho', className: 'text-orange-600 bg-orange-50 border-orange-200' },
-  balance: { label: 'Kiểm kho', className: 'text-blue-600 bg-blue-50 border-blue-200' },
+  import: { label: 'Nhập kho', className: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800' },
+  export: { label: 'Xuất kho', className: 'text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800' },
+  balance: { label: 'Kiểm kho', className: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' },
 }
 
 const formatVnd = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
 
-function isNearExpiry(expiryDate: string): boolean {
-  return new Date(expiryDate).getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000
-}
-
-function isExpiringSoon(expiryDate: string): boolean {
-  return new Date(expiryDate).getTime() - Date.now() < 90 * 24 * 60 * 60 * 1000
+function getExpiryClass(expiryDate: string): string {
+  const msLeft = new Date(expiryDate).getTime() - Date.now()
+  if (msLeft < 30 * 24 * 60 * 60 * 1000) return 'text-destructive font-medium'
+  if (msLeft < 90 * 24 * 60 * 60 * 1000) return 'text-yellow-600'
+  return ''
 }
 
 const transactionColumns: ColumnDef<StockTransaction>[] = [
@@ -49,7 +49,7 @@ const transactionColumns: ColumnDef<StockTransaction>[] = [
     accessorKey: 'type',
     header: 'Loại',
     cell: ({ row }) => {
-      const cfg = txTypeConfig[row.original.type]
+      const cfg = txTypeConfig[row.original.type] ?? { label: row.original.type, className: '' }
       return (
         <span
           className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${cfg.className}`}
@@ -65,7 +65,7 @@ const transactionColumns: ColumnDef<StockTransaction>[] = [
     cell: ({ row }) => {
       const q = row.original.quantity
       return (
-        <span className={q >= 0 ? 'text-green-600' : 'text-destructive'}>
+        <span className={q >= 0 ? 'text-green-700 dark:text-green-400' : 'text-destructive'}>
           {q >= 0 ? `+${q}` : q}
         </span>
       )
@@ -90,14 +90,8 @@ const batchColumns: ColumnDef<StockBatch>[] = [
     header: 'HSD',
     cell: ({ row }) => {
       const date = row.original.expiryDate
-      const near = isNearExpiry(date)
-      const soon = isExpiringSoon(date)
       return (
-        <span
-          className={
-            near ? 'font-medium text-destructive' : soon ? 'font-medium text-yellow-600' : ''
-          }
-        >
+        <span className={getExpiryClass(date)}>
           {new Date(date).toLocaleDateString('vi-VN')}
         </span>
       )
@@ -107,21 +101,12 @@ const batchColumns: ColumnDef<StockBatch>[] = [
   { accessorKey: 'importFormId', header: 'Mã phiếu nhập' },
 ]
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
-    </div>
-  )
-}
-
 export function InventoryDetailPage() {
   const { materialId } = useParams<{ materialId: string }>()
   const navigate = useNavigate()
   const { detail, isLoading, error } = useInventoryDetail(materialId ?? '')
 
+  // toast survives component unmount via portal; navigate fires immediately after
   useEffect(() => {
     if (error) {
       toast.error(error)
@@ -147,7 +132,7 @@ export function InventoryDetailPage() {
 
   if (!detail) return null
 
-  const statusCfg = statusConfig[detail.status]
+  const statusCfg = statusConfig[detail.status] ?? { label: detail.status, variant: 'outline' as const }
   const sortedBatches = [...detail.batches].sort(
     (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
   )
@@ -164,10 +149,10 @@ export function InventoryDetailPage() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Tồn hiện tại" value={`${detail.currentStock} ${detail.unit}`} />
-          <StatCard label="Giá trị tồn" value={formatVnd(detail.stockValue)} />
-          <StatCard label="Tối thiểu" value={`${detail.minThreshold} ${detail.unit}`} />
-          <StatCard label="Tối đa" value={`${detail.maxThreshold} ${detail.unit}`} />
+          <StatCard title="Tồn hiện tại" value={`${detail.currentStock} ${detail.unit}`} />
+          <StatCard title="Giá trị tồn" value={formatVnd(detail.stockValue)} />
+          <StatCard title="Tối thiểu" value={`${detail.minThreshold} ${detail.unit}`} />
+          <StatCard title="Tối đa" value={`${detail.maxThreshold} ${detail.unit}`} />
         </div>
 
         <Tabs defaultValue="movement">
