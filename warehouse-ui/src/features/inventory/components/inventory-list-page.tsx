@@ -172,18 +172,17 @@ export function InventoryListPage() {
       : `Nhà cung cấp (${selectedSuppliers.length})`
 
   return (
-    <PageContainer>
+    <PageContainer
+      title="Tồn kho"
+      actions={
+        <Button size="sm">
+          <Download className="h-4 w-4 mr-1.5" />
+          Xuất file
+        </Button>
+      }
+    >
       <div className="space-y-4">
-        {/* Table card */}
         <div className="rounded-lg border bg-card">
-          {/* Card header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b">
-            <h2 className="font-semibold">Danh sách tồn kho</h2>
-            <Button size="sm">
-              <Download className="h-4 w-4 mr-1.5" />
-              Xuất file
-            </Button>
-          </div>
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b">

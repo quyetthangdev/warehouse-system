@@ -1,19 +1,11 @@
 // src/features/inventory/components/inventory-detail-page.tsx
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { DataTable } from '@/components/common/data-table'
 import { PageContainer } from '@/components/layout/page-container'
 import { toast } from 'sonner'
@@ -149,30 +141,12 @@ export function InventoryDetailPage() {
   )
 
   return (
-    <PageContainer>
+    <PageContainer
+      title={detail.materialName}
+      actions={<Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>}
+    >
       <div className="space-y-4">
-        {/* Fix 2 — Breadcrumb: Tồn kho > [Tên NVL] */}
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/inventory">Tồn kho</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{detail.materialName}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div>
-            <h1 className="text-xl font-semibold">{detail.materialName}</h1>
-            <p className="text-sm text-muted-foreground">{detail.materialCode}</p>
-          </div>
-          <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
-        </div>
+        <p className="text-sm text-muted-foreground">{detail.materialCode}</p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard title="Tồn hiện tại" value={`${detail.currentStock} ${detail.unit}`} />
