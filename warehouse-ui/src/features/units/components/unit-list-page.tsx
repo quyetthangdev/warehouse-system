@@ -99,23 +99,23 @@ export function UnitListPage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer
+      title="Đơn vị tính"
+      actions={
+        canEdit ? (
+          <Button
+            onClick={() => {
+              setEditUnit(undefined)
+              setDialogOpen(true)
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm đơn vị
+          </Button>
+        ) : undefined
+      }
+    >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Đơn vị tính</h1>
-          {canEdit && (
-            <Button
-              onClick={() => {
-                setEditUnit(undefined)
-                setDialogOpen(true)
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm đơn vị
-            </Button>
-          )}
-        </div>
-
         <DataTable
           columns={columns}
           data={units}

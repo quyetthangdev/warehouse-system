@@ -1,10 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Package, BarChart2, AlertTriangle, Clock, Search, Download } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { FilterDropdown } from '@/components/common/filter-dropdown'
 import { api } from '@/services/axios.instance'
 import { useNotificationStore } from '@/stores/notification.store'
@@ -18,9 +17,17 @@ function formatVnd(value: number) {
   return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
 }
 
+const FREQUENCY_LABELS: Record<string, string> = {
+  '7': '7 ngày',
+  '14': '14 ngày',
+  '30': '30 ngày',
+  '90': '90 ngày',
+}
+
 export function DashboardPage() {
   const { data, isLoading, error, refetch } = useDashboard()
   const setNotifications = useNotificationStore((s) => s.setNotifications)
+  const [filterLabel, setFilterLabel] = useState('7 ngày')
 
   useEffect(() => {
     api
@@ -57,16 +64,15 @@ export function DashboardPage() {
   const { stats, importChart, exportChart, inventory } = data!
 
   return (
-    <PageContainer>
+    <PageContainer
+      title="Tổng quan"
+      actions={
+        <FilterDropdown
+          onApply={({ frequency }) => setFilterLabel(FREQUENCY_LABELS[frequency] ?? `${frequency} ngày`)}
+        />
+      }
+    >
       <div className="space-y-4">
-        {/* Filter bar */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Đang lọc theo</span>
-          <Badge variant="outline" className="border-primary/40 bg-primary/10 text-primary text-xs font-normal">
-            Giá trị lọc
-          </Badge>
-        </div>
-
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-4">
           <StatsCard
@@ -95,11 +101,8 @@ export function DashboardPage() {
           />
         </div>
 
-        {/* Import chart — with Tần suất filter shown by default */}
-        <CostChart title="Biểu đồ nhập kho" data={importChart} />
-
-        {/* Export chart */}
-        <CostChart title="Biểu đồ xuất kho" data={exportChart} />
+        <CostChart title="Biểu đồ nhập kho" data={importChart} filterLabel={filterLabel} />
+        <CostChart title="Biểu đồ xuất kho" data={exportChart} filterLabel={filterLabel} />
 
         {/* Inventory table */}
         <div className="rounded-md border bg-card">
@@ -110,8 +113,7 @@ export function DashboardPage() {
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Tìm kiếm..." className="pl-8" />
               </div>
-              <div className="ml-auto flex gap-2">
-                <FilterDropdown />
+              <div className="ml-auto">
                 <Button variant="outline" size="sm">
                   <Download />
                   Xuất file
