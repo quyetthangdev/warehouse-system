@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 
@@ -6,38 +5,25 @@ interface StatsCardProps {
   title: string
   value: string | number
   icon: LucideIcon
-  description?: string
-  variant?: 'default' | 'warning' | 'danger'
+  iconColor?: 'orange' | 'green'
 }
 
-export function StatsCard({ title, value, icon: Icon, description, variant = 'default' }: StatsCardProps) {
+export function StatsCard({ title, value, icon: Icon, iconColor = 'orange' }: StatsCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon
+    <div className="flex flex-col gap-3 rounded-md border bg-card px-6 py-4">
+      <div className="flex items-center gap-2">
+        <span
           className={cn(
-            'h-4 w-4',
-            variant === 'warning' && 'text-yellow-500',
-            variant === 'danger' && 'text-red-500',
-            variant === 'default' && 'text-muted-foreground',
-          )}
-        />
-      </CardHeader>
-      <CardContent>
-        <div
-          className={cn(
-            'text-2xl font-bold',
-            variant === 'warning' && 'text-yellow-600',
-            variant === 'danger' && 'text-red-600',
+            'flex h-8 w-8 items-center justify-center rounded-full',
+            iconColor === 'orange' && 'bg-primary/10 text-primary',
+            iconColor === 'green' && 'bg-emerald-100 text-emerald-600',
           )}
         >
-          {value}
-        </div>
-        {description && (
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-        )}
-      </CardContent>
-    </Card>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="text-sm text-muted-foreground">{title}</span>
+      </div>
+      <span className="text-3xl font-bold tracking-tight">{value}</span>
+    </div>
   )
 }

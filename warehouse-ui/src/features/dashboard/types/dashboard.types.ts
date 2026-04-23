@@ -3,18 +3,24 @@ export interface StatsOverview {
   totalStockValue: number
   lowStockCount: number
   nearExpiryCount: number
-  outOfStockCount: number
-  pendingImports: number
 }
 
-export interface CostChartPoint {
+export interface ChartPoint {
   date: string
-  materials: number
-  shipping: number
-  other: number
+  value: number
+}
+
+export interface InventoryItem {
+  name: string
+  batch: number
+  expiryDate: string
+  remaining: number
+  status: string
 }
 
 export interface DashboardData {
   stats: StatsOverview
-  costChart: CostChartPoint[]
+  importChart: ChartPoint[]
+  exportChart: ChartPoint[]
+  inventory: InventoryItem[]
 }
