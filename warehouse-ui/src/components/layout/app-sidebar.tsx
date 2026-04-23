@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, Package, Archive, ArrowDownToLine,
+  LayoutDashboard, Package, PackageSearch, ArrowDownToLine,
   ArrowUpFromLine, ClipboardList, Wallet, BarChart3,
   Settings, Users, ChevronLeft, Ruler, Truck,
 } from 'lucide-react'
@@ -14,7 +14,7 @@ const navItems = [
   { to: '/materials', icon: Package, label: 'Nguyên vật liệu' },
   { to: '/units', icon: Ruler, label: 'Đơn vị tính' },
   { to: '/suppliers', icon: Truck, label: 'Nhà cung cấp' },
-  { to: '/inventory', icon: Archive, label: 'Tồn kho' },
+  { to: '/inventory', icon: PackageSearch, label: 'Tồn kho' },
   { to: '/import-forms', icon: ArrowDownToLine, label: 'Nhập kho' },
   { to: '/export-forms', icon: ArrowUpFromLine, label: 'Xuất kho' },
   { to: '/balance-forms', icon: ClipboardList, label: 'Kiểm kho' },

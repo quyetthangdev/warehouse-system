@@ -16,7 +16,8 @@ import { DataTable } from '@/components/common/data-table'
 import { PageContainer } from '@/components/layout/page-container'
 import { useInventory } from '../hooks/use-inventory'
 import { StatCard } from './stat-card'
-import type { InventoryItem, StockStatus } from '../types/inventory.types'
+import { statusConfig, formatVnd } from '../inventory.utils'
+import type { InventoryItem } from '../types/inventory.types'
 import type { MaterialCategory } from '@/features/materials/types/material.types'
 
 const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
@@ -26,19 +27,6 @@ const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
   { value: 'consumable', label: 'Vật tư tiêu hao' },
   { value: 'spare_part', label: 'Phụ tùng' },
 ]
-
-const statusConfig: Record<
-  StockStatus,
-  { label: string; variant: 'destructive' | 'outline' | 'default' | 'secondary' }
-> = {
-  out: { label: 'Hết hàng', variant: 'destructive' },
-  low: { label: 'Tồn thấp', variant: 'destructive' },
-  normal: { label: 'Bình thường', variant: 'outline' },
-  high: { label: 'Tồn cao', variant: 'secondary' },
-}
-
-const formatVnd = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
 
 export function InventoryListPage() {
   const { items, isLoading } = useInventory()

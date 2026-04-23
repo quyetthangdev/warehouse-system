@@ -11,26 +11,14 @@ import { toast } from 'sonner'
 import { useInventoryDetail } from '../hooks/use-inventory-detail'
 import { StockMovementChart } from './stock-movement-chart'
 import { StatCard } from './stat-card'
-import type { StockTransaction, StockBatch, StockStatus, TransactionType } from '../types/inventory.types'
-
-const statusConfig: Record<
-  StockStatus,
-  { label: string; variant: 'destructive' | 'outline' | 'default' | 'secondary' }
-> = {
-  out: { label: 'Hết hàng', variant: 'destructive' },
-  low: { label: 'Tồn thấp', variant: 'destructive' },
-  normal: { label: 'Bình thường', variant: 'outline' },
-  high: { label: 'Tồn cao', variant: 'secondary' },
-}
+import { statusConfig, formatVnd } from '../inventory.utils'
+import type { StockTransaction, StockBatch, TransactionType } from '../types/inventory.types'
 
 const txTypeConfig: Record<TransactionType, { label: string; className: string }> = {
   import: { label: 'Nhập kho', className: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800' },
   export: { label: 'Xuất kho', className: 'text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800' },
   balance: { label: 'Kiểm kho', className: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' },
 }
-
-const formatVnd = (value: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
 
 function getExpiryClass(expiryDate: string): string {
   const msLeft = new Date(expiryDate).getTime() - Date.now()
