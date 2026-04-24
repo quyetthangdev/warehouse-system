@@ -59,7 +59,7 @@ function InfoRow({ label, value, className }: { label: string; value: string; cl
 function DetailContent({ formId, onClose }: { formId: string; onClose: () => void }) {
   const { form, isLoading, confirmForm, cancelForm, addItem } = useExportFormDetail(formId)
   const { materials } = useMaterials()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)

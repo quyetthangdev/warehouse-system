@@ -44,7 +44,7 @@ function exportToCSV(forms: ExportForm[]) {
 export function ExportFormListPage() {
   const { forms, isLoading, createForm, updateForm, cancelForm } = useExportForms()
   const { materials } = useMaterials()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editForm, setEditForm] = useState<ExportForm | undefined>()
