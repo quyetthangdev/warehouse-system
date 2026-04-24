@@ -20,7 +20,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
 import { useInventory } from '@/features/inventory/hooks/use-inventory'
-import { toast } from 'sonner'
+import { toast } from 'react-hot-toast'
 import { useExportFormDetail } from '../hooks/use-export-form-detail'
 import { exportFormStatusConfig, exportTypeConfig, disposalReasonConfig, formatDate } from '../export-form.utils'
 import type { ExportFormItem } from '../types/export-form.types'
@@ -129,6 +129,16 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
     if (ok) {
       toast.success('Đã xác nhận xuất kho')
       setShowConfirmDialog(false)
+      // BR-EXP-003: cảnh báo nếu tồn sau xuất < ngưỡng tối thiểu
+      const lowStockItems = form!.items.filter((item) => {
+        const inv = inventoryItems.find((i) => i.materialId === item.materialId)
+        if (!inv) return false
+        return (inv.currentStock - item.quantity) < inv.minThreshold
+      })
+      if (lowStockItems.length > 0) {
+        const names = lowStockItems.map((i) => i.materialName).join(', ')
+        toast(`⚠️ Tồn kho dưới mức tối thiểu: ${names}`, { duration: 5000 })
+      }
     } else {
       toast.error(message ?? 'Không thể xác nhận phiếu')
     }
@@ -170,7 +180,7 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
   function handlePrint() {
     const win = window.open('', '_blank', 'width=900,height=700')
     if (!win) return
-    win.document.write(buildPrintHtml(form))
+    win.document.write(buildPrintHtml(form!))
     win.document.close()
     win.focus()
     win.onafterprint = () => win.close()
@@ -200,10 +210,10 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-5">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Info grid */}
-        <div className="rounded-lg border bg-card p-5">
-          <h3 className="text-sm font-semibold mb-4">Thông tin phiếu xuất</h3>
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">Thông tin phiếu xuất</h3>
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
             <InfoRow label="Loại xuất" value={exportTypeConfig[form.exportType]?.label ?? form.exportType} />
             <InfoRow label="Ngày xuất" value={formatDate(form.exportDate)} />
@@ -231,12 +241,14 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
           </div>
         </div>
 
+        <hr className="border-border" />
+
         {/* Items */}
-        <div className="rounded-lg border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Danh sách sản phẩm
-              <span className="ml-2 font-normal text-muted-foreground">({form.items.length})</span>
+              <span className="ml-2 normal-case font-normal">({form.items.length})</span>
             </h3>
             {canEdit && isDraft && !showAddRow && (
               <Button size="sm" variant="outline" onClick={() => setShowAddRow(true)}>
