@@ -1,13 +1,12 @@
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface StatusBadgeProps {
-  active: boolean
+  label: string
+  className?: string
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline'
 }
 
-export function StatusBadge({ active }: StatusBadgeProps) {
-  return active ? (
-    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Hoạt động</Badge>
-  ) : (
-    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">Ngừng dùng</Badge>
-  )
+export function StatusBadge({ label, className, variant }: StatusBadgeProps) {
+  return <Badge variant={variant} className={className}>{label}</Badge>
 }

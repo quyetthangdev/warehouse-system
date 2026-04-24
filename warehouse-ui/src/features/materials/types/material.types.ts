@@ -7,6 +7,14 @@ export type MaterialCategory =
   | 'consumable'
   | 'spare_part'
 
+export interface UnitConversion {
+  id: string
+  fromQty: number
+  fromUnitId: string
+  toQty: number
+  toUnitId: string
+}
+
 export interface Material {
   id: string
   code: string
@@ -18,6 +26,10 @@ export interface Material {
   maximumInventory: number
   supplierIds: string[]
   isActive: boolean
+  batchCount: number
+  nearestExpiryDate: string | null
+  availableStock: number
+  conversions: UnitConversion[]
 }
 
 export interface CreateMaterialRequest {
@@ -27,6 +39,7 @@ export interface CreateMaterialRequest {
   minimumInventory: number
   maximumInventory: number
   supplierIds: string[]
+  conversions?: UnitConversion[]
 }
 
 export type UpdateMaterialRequest = CreateMaterialRequest

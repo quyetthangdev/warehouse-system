@@ -10,7 +10,7 @@ const mockUser: User = {
   fullName: 'Nguyễn Văn Admin',
   email: 'admin@trendcoffee.vn',
   phoneNumber: '0901234567',
-  role: 'manager',
+  role: 'admin',
   isActive: true,
 }
 

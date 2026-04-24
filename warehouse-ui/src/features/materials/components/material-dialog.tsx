@@ -1,15 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { X } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { X, Plus, Trash2, Package, Pencil } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AppDialog, AppDialogFooter } from '@/components/common/app-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { materialSchema, type MaterialFormValues } from '../schemas/material.schema'
-import type { Material } from '../types/material.types'
+import type { Material, UnitConversion } from '../types/material.types'
 import type { Unit } from '@/features/units/types/unit.types'
 import type { Supplier } from '@/features/suppliers/types/supplier.types'
 
@@ -59,12 +53,14 @@ export function MaterialDialog({
     formState: { errors, isSubmitting },
   } = useForm<MaterialFormValues>({
     resolver: zodResolver(materialSchema),
-    defaultValues: { name: '', minimumInventory: 0, maximumInventory: 0, supplierIds: [] },
+    defaultValues: { name: '', minimumInventory: 0, maximumInventory: 0, supplierIds: [], conversions: [] },
   })
 
   const selectedCategory = watch('category')
   const selectedBaseUnitId = watch('baseUnitId')
   const supplierIds = watch('supplierIds') ?? []
+
+  const [conversions, setConversions] = useState<UnitConversion[]>([])
 
   useEffect(() => {
     if (open) {
@@ -76,7 +72,9 @@ export function MaterialDialog({
           minimumInventory: material.minimumInventory,
           maximumInventory: material.maximumInventory,
           supplierIds: material.supplierIds,
+          conversions: material.conversions,
         })
+        setConversions(material.conversions ?? [])
       } else {
         reset({
           name: '',
@@ -86,7 +84,9 @@ export function MaterialDialog({
           minimumInventory: 0,
           maximumInventory: 0,
           supplierIds: [],
+          conversions: [],
         })
+        setConversions([])
       }
     }
   }, [open, material, reset])
@@ -105,27 +105,54 @@ export function MaterialDialog({
     )
   }
 
+  function addConversion() {
+    const newConv: UnitConversion = {
+      id: Date.now().toString(),
+      fromQty: 1,
+      fromUnitId: units[0]?.id ?? '',
+      toQty: 1,
+      toUnitId: units[1]?.id ?? units[0]?.id ?? '',
+    }
+    setConversions((prev) => [...prev, newConv])
+  }
+
+  function removeConversion(id: string) {
+    setConversions((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  function updateConversion(id: string, patch: Partial<UnitConversion>) {
+    setConversions((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)))
+  }
+
   const linkedSuppliers = suppliers.filter((s) => supplierIds.includes(s.id))
   const availableSuppliers = suppliers.filter((s) => !supplierIds.includes(s.id))
 
+  async function handleFormSubmit(values: MaterialFormValues) {
+    await onSubmit({ ...values, conversions })
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && !isSubmitting && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {material ? 'Sửa nguyên vật liệu' : 'Thêm nguyên vật liệu'}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      icon={material ? Pencil : Package}
+      title={material ? 'Sửa nguyên vật liệu' : 'Thêm nguyên vật liệu'}
+      isLoading={isSubmitting}
+      className="sm:max-w-2xl"
+    >
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
           <Tabs defaultValue="info" className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="info">Thông tin</TabsTrigger>
-              <TabsTrigger value="suppliers">
-                Nhà cung cấp ({supplierIds.length})
-              </TabsTrigger>
+              <TabsTrigger value="info">Thông tin chung</TabsTrigger>
+              <TabsTrigger value="conversions">Quy đổi đơn vị</TabsTrigger>
+              <TabsTrigger value="linked">Thông tin liên kết mặt hàng</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="info" className="space-y-4">
+            {/* Fixed-height container prevents dialog resize when switching tabs */}
+            <div className="min-h-[360px] overflow-y-auto">
+
+            {/* Tab 1: Thông tin chung */}
+            <TabsContent value="info" className="space-y-4 mt-0">
               {material && (
                 <div className="space-y-1">
                   <Label>Mã nguyên vật liệu</Label>
@@ -225,9 +252,8 @@ export function MaterialDialog({
                   )}
                 </div>
               </div>
-            </TabsContent>
 
-            <TabsContent value="suppliers" className="space-y-4">
+              {/* Supplier linking kept in "Thông tin chung" tab */}
               <div className="space-y-2">
                 <Label>Nhà cung cấp đang liên kết</Label>
                 {linkedSuppliers.length === 0 ? (
@@ -253,11 +279,8 @@ export function MaterialDialog({
                     ))}
                   </ul>
                 )}
-              </div>
 
-              {availableSuppliers.length > 0 && (
-                <div className="space-y-1">
-                  <Label>Thêm nhà cung cấp</Label>
+                {availableSuppliers.length > 0 && (
                   <Select key={supplierIds.length} onValueChange={(v) => addSupplier(v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn nhà cung cấp để thêm..." />
@@ -270,21 +293,105 @@ export function MaterialDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              )}
+                )}
+              </div>
             </TabsContent>
+
+            {/* Tab 2: Quy đổi đơn vị */}
+            <TabsContent value="conversions" className="space-y-4 mt-0">
+              <div className="space-y-2">
+                {conversions.map((conv) => (
+                  <div key={conv.id} className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={conv.fromQty}
+                      onChange={(e) =>
+                        updateConversion(conv.id, { fromQty: Number(e.target.value) })
+                      }
+                      className="w-16"
+                      min={1}
+                    />
+                    <Select
+                      value={conv.fromUnitId}
+                      onValueChange={(v) => updateConversion(conv.id, { fromUnitId: v })}
+                    >
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.symbol}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-muted-foreground">=</span>
+                    <Input
+                      type="number"
+                      value={conv.toQty}
+                      onChange={(e) =>
+                        updateConversion(conv.id, { toQty: Number(e.target.value) })
+                      }
+                      className="w-16"
+                      min={1}
+                    />
+                    <Select
+                      value={conv.toUnitId}
+                      onValueChange={(v) => updateConversion(conv.id, { toUnitId: v })}
+                    >
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.symbol}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <button
+                      type="button"
+                      onClick={() => removeConversion(conv.id)}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={addConversion}
+                  className="text-primary"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Thêm đơn vị quy đổi
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: Thông tin liên kết mặt hàng */}
+            <TabsContent value="linked" className="mt-0">
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Những mặt hàng/nhóm lựa chọn sử dụng nguyên liệu này đã liên kết khi hàng
+              </div>
+            </TabsContent>
+
+            </div>{/* end fixed-height container */}
           </Tabs>
 
-          <DialogFooter className="mt-4">
+          <AppDialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Đang lưu...' : 'Lưu'}
             </Button>
-          </DialogFooter>
+          </AppDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </AppDialog>
   )
 }

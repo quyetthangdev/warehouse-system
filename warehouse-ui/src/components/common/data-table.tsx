@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   flexRender,
   type ColumnDef,
+  type SortingState,
+  type VisibilityState,
 } from '@tanstack/react-table'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -18,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { DataTableToolbar } from './data-table-toolbar'
+import { DataTablePagination } from './data-table-pagination'
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[]
@@ -26,6 +29,8 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   emptyMessage?: string
   hideSearch?: boolean
+  hideToolbar?: boolean
+  filters?: ReactNode
 }
 
 export function DataTable<T>({
@@ -35,34 +40,36 @@ export function DataTable<T>({
   searchPlaceholder = 'Tìm kiếm...',
   emptyMessage = 'Không có dữ liệu',
   hideSearch = false,
+  hideToolbar = false,
+  filters,
 }: DataTableProps<T>) {
   const [globalFilter, setGlobalFilter] = useState('')
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter },
+    state: { globalFilter, sorting, columnVisibility },
     onGlobalFilterChange: setGlobalFilter,
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
     autoResetPageIndex: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 10 } },
   })
 
-  const { pageIndex, pageSize } = table.getState().pagination
-  const filteredCount = table.getFilteredRowModel().rows.length
-  const from = filteredCount === 0 ? 0 : pageIndex * pageSize + 1
-  const to = Math.min((pageIndex + 1) * pageSize, filteredCount)
-
   return (
-    <div className="space-y-4">
-      {!hideSearch && (
-        <Input
-          placeholder={searchPlaceholder}
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-sm"
+    <div className="space-y-5">
+      {!hideToolbar && (
+        <DataTableToolbar
+          table={table}
+          searchPlaceholder={searchPlaceholder}
+          hideSearch={hideSearch}
+          filters={filters}
         />
       )}
 
@@ -72,7 +79,7 @@ export function DataTable<T>({
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
                 {hg.headers.map((h) => (
-                  <TableHead key={h.id}>
+                  <TableHead key={h.id} style={{ minWidth: `${h.getSize()}px` }}>
                     {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                   </TableHead>
                 ))}
@@ -114,33 +121,7 @@ export function DataTable<T>({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          {filteredCount === 0
-            ? 'Không có kết quả'
-            : `Hiển thị ${from}–${to} / ${filteredCount} kết quả`}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            aria-label="Trang trước"
-          >
-            ‹
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            aria-label="Trang sau"
-          >
-            ›
-          </Button>
-        </div>
-      </div>
+      {!hideToolbar && <DataTablePagination table={table} />}
     </div>
   )
 }

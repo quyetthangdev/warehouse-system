@@ -17,17 +17,11 @@ function formatVnd(value: number) {
   return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
 }
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  '7': '7 ngày',
-  '14': '14 ngày',
-  '30': '30 ngày',
-  '90': '90 ngày',
-}
-
 export function DashboardPage() {
-  const { data, isLoading, error, refetch } = useDashboard()
   const setNotifications = useNotificationStore((s) => s.setNotifications)
-  const [filterLabel, setFilterLabel] = useState('7 ngày')
+  const [selectedDays, setSelectedDays] = useState(7)
+  const { data, isLoading, error, refetch } = useDashboard(selectedDays)
+  const filterLabel = `${selectedDays} ngày`
 
   useEffect(() => {
     api
@@ -68,7 +62,7 @@ export function DashboardPage() {
       title="Tổng quan"
       actions={
         <FilterDropdown
-          onApply={({ frequency }) => setFilterLabel(FREQUENCY_LABELS[frequency] ?? `${frequency} ngày`)}
+          onApply={({ frequency }) => setSelectedDays(Number(frequency))}
         />
       }
     >

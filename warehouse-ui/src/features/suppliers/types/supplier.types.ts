@@ -9,6 +9,7 @@ export interface Supplier {
   email: string
   location: string
   taxCode: string
+  websiteUrl?: string
   paymentTerms: PaymentTerms
   note?: string
   isActive: boolean
@@ -22,6 +23,7 @@ export interface CreateSupplierRequest {
   email: string
   location: string
   taxCode: string
+  websiteUrl?: string
   paymentTerms: PaymentTerms
   note?: string
 }

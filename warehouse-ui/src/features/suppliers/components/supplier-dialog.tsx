@@ -1,13 +1,7 @@
 import { useEffect } from 'react'
+import { Building2, Pencil } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { AppDialog, AppDialogFooter } from '@/components/common/app-dialog'
 import { supplierSchema, type SupplierFormValues } from '../schemas/supplier.schema'
 import type { Supplier } from '../types/supplier.types'
 
@@ -30,7 +25,7 @@ interface SupplierDialogProps {
 }
 
 const paymentTermsOptions = [
-  { value: 'cod', label: 'COD (Thanh toán ngay)' },
+  { value: 'cod', label: 'COD' },
   { value: '7_days', label: '7 ngày' },
   { value: '15_days', label: '15 ngày' },
   { value: '30_days', label: '30 ngày' },
@@ -46,7 +41,10 @@ export function SupplierDialog({ open, supplier, onSubmit, onClose }: SupplierDi
     formState: { errors, isSubmitting },
   } = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
-    defaultValues: { code: '', name: '', contactPerson: '', phone: '', email: '', location: '', taxCode: '', note: '' },
+    defaultValues: {
+      code: '', name: '', contactPerson: '', phone: '',
+      email: '', location: '', taxCode: '', websiteUrl: '', note: '',
+    },
   })
 
   const selectedPaymentTerms = watch('paymentTerms')
@@ -63,6 +61,7 @@ export function SupplierDialog({ open, supplier, onSubmit, onClose }: SupplierDi
           location: supplier.location,
           taxCode: supplier.taxCode,
           paymentTerms: supplier.paymentTerms,
+          websiteUrl: supplier.websiteUrl ?? '',
           note: supplier.note ?? '',
         })
       } else {
@@ -72,145 +71,158 @@ export function SupplierDialog({ open, supplier, onSubmit, onClose }: SupplierDi
   }, [open, supplier, reset])
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && !isSubmitting && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{supplier ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="sup-code">Mã nhà cung cấp *</Label>
-              <Input
-                id="sup-code"
-                placeholder="VD: NCC001"
-                {...register('code')}
-                aria-invalid={!!errors.code}
-              />
-              {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-name">Tên nhà cung cấp *</Label>
-              <Input
-                id="sup-name"
-                placeholder="VD: Công ty Cà Phê Việt"
-                {...register('name')}
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-contact">Người liên hệ *</Label>
-              <Input
-                id="sup-contact"
-                placeholder="Nguyễn Văn A"
-                {...register('contactPerson')}
-                aria-invalid={!!errors.contactPerson}
-              />
-              {errors.contactPerson && (
-                <p className="text-sm text-destructive">{errors.contactPerson.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-phone">Số điện thoại *</Label>
-              <Input
-                id="sup-phone"
-                placeholder="0901234567"
-                {...register('phone')}
-                aria-invalid={!!errors.phone}
-              />
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-email">Email *</Label>
-              <Input
-                id="sup-email"
-                type="email"
-                placeholder="contact@example.com"
-                {...register('email')}
-                aria-invalid={!!errors.email}
-              />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-location">Địa chỉ *</Label>
-              <Input
-                id="sup-location"
-                placeholder="TP. Hồ Chí Minh"
-                {...register('location')}
-                aria-invalid={!!errors.location}
-              />
-              {errors.location && (
-                <p className="text-sm text-destructive">{errors.location.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="sup-tax">Mã số thuế *</Label>
-              <Input
-                id="sup-tax"
-                placeholder="0123456789"
-                {...register('taxCode')}
-                aria-invalid={!!errors.taxCode}
-              />
-              {errors.taxCode && (
-                <p className="text-sm text-destructive">{errors.taxCode.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <Label>Điều khoản thanh toán *</Label>
-              <Select
-                value={selectedPaymentTerms}
-                onValueChange={(v) =>
-                  setValue('paymentTerms', v as SupplierFormValues['paymentTerms'], {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger aria-invalid={!!errors.paymentTerms}>
-                  <SelectValue placeholder="Chọn điều khoản" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentTermsOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.paymentTerms && (
-                <p className="text-sm text-destructive">{errors.paymentTerms.message}</p>
-              )}
-            </div>
-
-            <div className="col-span-2 space-y-1">
-              <Label htmlFor="sup-note">Ghi chú</Label>
-              <Textarea
-                id="sup-note"
-                placeholder="Ghi chú thêm..."
-                className="resize-none"
-                rows={3}
-                {...register('note')}
-              />
-            </div>
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      icon={supplier ? Pencil : Building2}
+      title={supplier ? 'Chi tiết nhà cung cấp' : 'Thêm mới nhà cung cấp'}
+      isLoading={isSubmitting}
+      className="sm:max-w-2xl"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="sup-name">Tên nhà cung cấp *</Label>
+            <Input
+              id="sup-name"
+              placeholder="Nhập tên nhà cung cấp"
+              {...register('name')}
+              aria-invalid={!!errors.name}
+            />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Đang lưu...' : 'Lưu'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-1">
+            <Label htmlFor="sup-code">Code *</Label>
+            <Input
+              id="sup-code"
+              placeholder="Nhập code nhà cung cấp"
+              {...register('code')}
+              aria-invalid={!!errors.code}
+              readOnly={!!supplier}
+              className={supplier ? 'bg-muted' : ''}
+            />
+            {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sup-contact">Người liên hệ *</Label>
+            <Input
+              id="sup-contact"
+              placeholder="Nhập người liên hệ"
+              {...register('contactPerson')}
+              aria-invalid={!!errors.contactPerson}
+            />
+            {errors.contactPerson && (
+              <p className="text-sm text-destructive">{errors.contactPerson.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sup-phone">Số điện thoại *</Label>
+            <Input
+              id="sup-phone"
+              placeholder="Nhập số điện thoại"
+              {...register('phone')}
+              aria-invalid={!!errors.phone}
+            />
+            {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sup-email">Email *</Label>
+            <Input
+              id="sup-email"
+              type="email"
+              placeholder="Nhập email"
+              {...register('email')}
+              aria-invalid={!!errors.email}
+            />
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sup-location">Địa chỉ *</Label>
+            <Input
+              id="sup-location"
+              placeholder="Nhập địa chỉ"
+              {...register('location')}
+              aria-invalid={!!errors.location}
+            />
+            {errors.location && (
+              <p className="text-sm text-destructive">{errors.location.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="sup-tax">Mã số thuế *</Label>
+            <Input
+              id="sup-tax"
+              placeholder="Nhập mã số thuế"
+              {...register('taxCode')}
+              aria-invalid={!!errors.taxCode}
+            />
+            {errors.taxCode && (
+              <p className="text-sm text-destructive">{errors.taxCode.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label>Điều khoản thanh toán *</Label>
+            <Select
+              value={selectedPaymentTerms}
+              onValueChange={(v) =>
+                setValue('paymentTerms', v as SupplierFormValues['paymentTerms'], {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger aria-invalid={!!errors.paymentTerms}>
+                <SelectValue placeholder="Chọn điều khoản thanh toán" />
+              </SelectTrigger>
+              <SelectContent>
+                {paymentTermsOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.paymentTerms && (
+              <p className="text-sm text-destructive">{errors.paymentTerms.message}</p>
+            )}
+          </div>
+
+          <div className="col-span-2 space-y-1">
+            <Label htmlFor="sup-website">Link nhà cung cấp</Label>
+            <Input
+              id="sup-website"
+              placeholder="Nhập link nhà cung cấp"
+              {...register('websiteUrl')}
+            />
+          </div>
+
+          <div className="col-span-2 space-y-1">
+            <Label htmlFor="sup-note">Ghi chú</Label>
+            <Textarea
+              id="sup-note"
+              placeholder="Nhập ghi chú"
+              className="resize-none"
+              rows={3}
+              {...register('note')}
+            />
+          </div>
+        </div>
+
+        <AppDialogFooter>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Huỷ
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Đang lưu...' : supplier ? 'Lưu thay đổi' : 'Lưu nhà cung cấp'}
+          </Button>
+        </AppDialogFooter>
+      </form>
+    </AppDialog>
   )
 }

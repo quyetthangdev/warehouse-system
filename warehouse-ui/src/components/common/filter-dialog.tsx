@@ -1,13 +1,6 @@
 import { useState } from 'react'
-import { Calendar } from 'lucide-react'
+import { SlidersHorizontal, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -15,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { AppDialog, AppDialogFooter } from './app-dialog'
 
 interface FilterDialogProps {
   open: boolean
@@ -39,15 +33,17 @@ export function FilterDialog({ open, onOpenChange, onApply }: FilterDialogProps)
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-sm font-medium">Tần suất</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
+    <AppDialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      icon={SlidersHorizontal}
+      title="Bộ lọc"
+    >
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Tần suất</p>
           <Select value={frequency} onValueChange={setFrequency}>
-            <SelectTrigger className="h-9 text-sm">
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -57,34 +53,30 @@ export function FilterDialog({ open, onOpenChange, onApply }: FilterDialogProps)
               <SelectItem value="90">90 ngày</SelectItem>
             </SelectContent>
           </Select>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Ngày bắt đầu</p>
-              <div className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                <span>{formatDate(startDate)}</span>
-              </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Ngày bắt đầu</p>
+            <div className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span>{formatDate(startDate)}</span>
             </div>
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">Ngày kết thúc</p>
-              <div className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                <span>{formatDate(today)}</span>
-              </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Ngày kết thúc</p>
+            <div className="flex h-9 items-center gap-2 rounded-md border px-3 text-xs text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span>{formatDate(today)}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Huỷ
-          </Button>
-          <Button size="sm" onClick={handleApply}>
-            Áp dụng
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <AppDialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>Huỷ</Button>
+        <Button onClick={handleApply}>Áp dụng</Button>
+      </AppDialogFooter>
+    </AppDialog>
   )
 }

@@ -1,7 +1,5 @@
-// warehouse-ui/src/features/units/components/unit-list-page.tsx
 import { useState, useMemo } from 'react'
-import { Plus } from 'lucide-react'
-import { type ColumnDef } from '@tanstack/react-table'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -10,65 +8,28 @@ import { useAuthStore } from '@/stores/auth.store'
 import { toast } from 'sonner'
 import { useUnits } from '../hooks/use-units'
 import { UnitDialog } from './unit-dialog'
+import { getColumns } from './columns'
 import type { Unit } from '../types/unit.types'
 import type { UnitFormValues } from '../schemas/unit.schema'
-
-const typeLabel: Record<string, string> = {
-  weight: 'Khối lượng',
-  volume: 'Thể tích',
-  quantity: 'Số lượng',
-}
 
 export function UnitListPage() {
   const { units, isLoading, createUnit, updateUnit, removeUnit } = useUnits()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
-  const canDelete = useAuthStore((s) => s.hasPermission(['admin']))
+  const canDelete = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editUnit, setEditUnit] = useState<Unit | undefined>()
   const [deleteTarget, setDeleteTarget] = useState<Unit | undefined>()
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const columns = useMemo<ColumnDef<Unit>[]>(
-    () => [
-      { accessorKey: 'name', header: 'Tên đơn vị' },
-      { accessorKey: 'symbol', header: 'Ký hiệu' },
-      {
-        accessorKey: 'type',
-        header: 'Loại',
-        cell: ({ row }) => typeLabel[row.original.type] ?? row.original.type,
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <div className="flex justify-end gap-2">
-            {canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEditUnit(row.original)
-                  setDialogOpen(true)
-                }}
-              >
-                Sửa
-              </Button>
-            )}
-            {canDelete && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setDeleteTarget(row.original)}
-              >
-                Xóa
-              </Button>
-            )}
-          </div>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      getColumns({
+        canEdit,
+        canDelete,
+        onEdit: (unit) => { setEditUnit(unit); setDialogOpen(true) },
+        onDelete: (unit) => setDeleteTarget(unit),
+      }),
     [canEdit, canDelete],
   )
 
@@ -103,41 +64,35 @@ export function UnitListPage() {
       title="Đơn vị tính"
       actions={
         canEdit ? (
-          <Button
-            onClick={() => {
-              setEditUnit(undefined)
-              setDialogOpen(true)
-            }}
-          >
+          <Button onClick={() => { setEditUnit(undefined); setDialogOpen(true) }}>
             <Plus className="mr-2 h-4 w-4" />
             Thêm đơn vị
           </Button>
         ) : undefined
       }
     >
-      <div className="space-y-4">
-        <DataTable
-          columns={columns}
-          data={units}
-          isLoading={isLoading}
-          searchPlaceholder="Tìm kiếm đơn vị..."
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={units}
+        isLoading={isLoading}
+        searchPlaceholder="Tìm kiếm đơn vị..."
+        emptyMessage="Chưa có đơn vị nào"
+      />
 
       <UnitDialog
         open={dialogOpen}
         unit={editUnit}
         onSubmit={handleSubmit}
-        onClose={() => {
-          setDialogOpen(false)
-          setEditUnit(undefined)
-        }}
+        onClose={() => { setDialogOpen(false); setEditUnit(undefined) }}
       />
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Xóa đơn vị tính"
+        title="Xóa đơn vị"
         description={`Bạn có chắc muốn xóa "${deleteTarget?.name}"? Hành động này không thể hoàn tác.`}
+        icon={Trash2}
+        confirmLabel="Xóa"
+        confirmVariant="destructive"
         isLoading={isDeleting}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(undefined)}
