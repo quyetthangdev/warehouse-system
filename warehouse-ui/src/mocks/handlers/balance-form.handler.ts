@@ -117,8 +117,8 @@ export const balanceFormHandlers = [
     if (!form) {
       return HttpResponse.json({ statusCode: 404, message: 'Không tìm thấy' }, { status: 404 })
     }
-    if (form.status === 'completed') {
-      return HttpResponse.json({ statusCode: 400, message: 'Không thể hủy phiếu đã hoàn thành' }, { status: 400 })
+    if (form.status === 'completed' || form.status === 'cancelled') {
+      return HttpResponse.json({ statusCode: 400, message: 'Không thể hủy phiếu đã hoàn thành hoặc đã hủy' }, { status: 400 })
     }
     const updated = { ...form, status: 'cancelled' as const }
     forms = forms.map((f) => (f.id === params.id ? updated : f))
