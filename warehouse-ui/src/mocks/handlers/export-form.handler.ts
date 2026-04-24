@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import type { ApiResponse } from '@/types/api.types'
 import type { ExportForm } from '@/features/export-forms/types/export-form.types'
 import { mockExportForms } from '@/features/export-forms/mocks/export-form.mock'
+import { mockInventoryItems } from '@/features/inventory/mocks/inventory.mock'
 import { WAREHOUSES } from '@/features/export-forms/export-form.utils'
 
 const BASE_URL = 'http://localhost:3000'
@@ -103,6 +104,11 @@ export const exportFormHandlers = [
         { status: 400 },
       )
     }
+    // Deduct stock for each item
+    form.items.forEach((item) => {
+      const inv = mockInventoryItems.find((i) => i.materialId === item.materialId)
+      if (inv) inv.currentStock = Math.max(0, inv.currentStock - item.quantity)
+    })
     const updated = {
       ...form,
       status: 'confirmed' as const,
