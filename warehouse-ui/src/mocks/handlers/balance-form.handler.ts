@@ -103,7 +103,7 @@ export const balanceFormHandlers = [
     })
     const updated: BalanceForm = {
       ...form,
-      status: 'completed',
+      status: 'completed' as const,
       items,
       completedAt: new Date().toISOString(),
       completedBy: 'Nguyễn Văn A',
