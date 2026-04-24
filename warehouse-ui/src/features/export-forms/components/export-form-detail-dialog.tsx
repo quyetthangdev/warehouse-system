@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Ban, CheckCircle, Plus, X } from 'lucide-react'
+import { Ban, CheckCircle, Plus, Printer, X } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 import { useExportFormDetail } from '../hooks/use-export-form-detail'
 import { exportFormStatusConfig, exportTypeConfig, disposalReasonConfig, formatDate } from '../export-form.utils'
 import type { ExportFormItem } from '../types/export-form.types'
+import { buildPrintHtml } from './export-form-print-view'
 
 const emptyAddItem = { materialId: '', materialName: '', unit: '', quantity: 1, expiryDate: '', note: '' }
 
@@ -166,6 +167,16 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
     )
   }
 
+  function handlePrint() {
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if (!win) return
+    win.document.write(buildPrintHtml(form))
+    win.document.close()
+    win.focus()
+    win.onafterprint = () => win.close()
+    win.print()
+  }
+
   const statusCfg = exportFormStatusConfig[form.status]
   const isDraft = form.status === 'draft'
 
@@ -177,9 +188,15 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
           <h2 className="text-base font-semibold">{form.code}</h2>
           <StatusBadge label={statusCfg.label} variant={statusCfg.variant} />
         </div>
-        <DialogClose asChild>
-          <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
-        </DialogClose>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-1.5" />
+            In phiếu
+          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
+          </DialogClose>
+        </div>
       </div>
 
       {/* Scrollable body */}
