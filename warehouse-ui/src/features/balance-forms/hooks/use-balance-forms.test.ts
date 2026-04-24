@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { http, HttpResponse } from 'msw'
 import { useBalanceForms } from './use-balance-forms'
@@ -31,12 +31,15 @@ describe('useBalanceForms', () => {
   it('tạo phiếu kiểm thành công', async () => {
     const { result } = renderHook(() => useBalanceForms())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    const res = await result.current.createForm({
-      balanceType: 'periodic',
-      scope: 'full',
-      balanceDate: '2026-04-24',
-      inspectors: ['A', 'B'],
-      items: [{ materialId: 'mat-001', materialName: 'Cam', unit: 'kg', systemQuantity: 10 }],
+    let res!: { ok: boolean; message?: string }
+    await act(async () => {
+      res = await result.current.createForm({
+        balanceType: 'periodic',
+        scope: 'full',
+        balanceDate: '2026-04-24',
+        inspectors: ['A', 'B'],
+        items: [{ materialId: 'mat-001', materialName: 'Cam', unit: 'kg', systemQuantity: 10 }],
+      })
     })
     expect(res.ok).toBe(true)
   })
@@ -44,7 +47,10 @@ describe('useBalanceForms', () => {
   it('hủy phiếu kiểm thành công', async () => {
     const { result } = renderHook(() => useBalanceForms())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    const res = await result.current.cancelForm('pk-001')
+    let res!: { ok: boolean; message?: string }
+    await act(async () => {
+      res = await result.current.cancelForm('pk-001')
+    })
     expect(res.ok).toBe(true)
   })
 })
