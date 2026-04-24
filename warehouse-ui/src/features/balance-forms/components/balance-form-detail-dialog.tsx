@@ -12,7 +12,7 @@ import { StatusBadge } from '@/components/common/status-badge'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
-import toast from 'react-hot-toast'
+import { toast } from 'react-hot-toast'
 import { useBalanceFormDetail } from '../hooks/use-balance-form-detail'
 import {
   balanceFormStatusConfig,
@@ -96,11 +96,12 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
   }
 
   async function handleCancel() {
+    const wasInProgress = form?.status === 'in_progress'
     setIsActioning(true)
     const { ok, message } = await cancelForm()
     setIsActioning(false)
     if (ok) {
-      if (form?.status === 'in_progress') unlockWarehouse()
+      if (wasInProgress) unlockWarehouse()
       toast.success('Đã hủy phiếu kiểm')
       setShowCancelDialog(false)
     } else {
