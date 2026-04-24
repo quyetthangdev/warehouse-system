@@ -7,6 +7,7 @@ import { materialHandlers } from './material.handler'
 import { inventoryHandlers } from './inventory.handler'
 import { importFormHandlers } from './import-form.handler'
 import { exportFormHandlers } from './export-form.handler'
+import { balanceFormHandlers } from './balance-form.handler'
 
 export const handlers = [
   ...authHandlers,
@@ -18,4 +19,5 @@ export const handlers = [
   ...inventoryHandlers,
   ...importFormHandlers,
   ...exportFormHandlers,
+  ...balanceFormHandlers,
 ]
