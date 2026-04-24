@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { PageContainer } from '@/components/layout/page-container'
@@ -56,14 +57,27 @@ export function ExportFormListPage() {
 
   const [statusFilter, setStatusFilter] = useState<ExportFormStatus | 'all'>('all')
   const [typeFilter, setTypeFilter] = useState<ExportType | 'all'>('all')
+  const [exportedByFilter, setExportedByFilter] = useState<string>('all')
+  const [materialFilter, setMaterialFilter] = useState<string>('all')
+  const [dateFromFilter, setDateFromFilter] = useState<string>('')
+  const [dateToFilter, setDateToFilter] = useState<string>('')
+
+  const exportedByOptions = useMemo(
+    () => [...new Set(forms.map((f) => f.exportedBy))].sort(),
+    [forms],
+  )
 
   const filtered = useMemo(() => {
     return forms.filter((f) => {
       if (statusFilter !== 'all' && f.status !== statusFilter) return false
       if (typeFilter !== 'all' && f.exportType !== typeFilter) return false
+      if (exportedByFilter !== 'all' && f.exportedBy !== exportedByFilter) return false
+      if (materialFilter !== 'all' && !f.items.some((i) => i.materialId === materialFilter)) return false
+      if (dateFromFilter && f.exportDate < dateFromFilter) return false
+      if (dateToFilter && f.exportDate > dateToFilter) return false
       return true
     })
-  }, [forms, statusFilter, typeFilter])
+  }, [forms, statusFilter, typeFilter, exportedByFilter, materialFilter, dateFromFilter, dateToFilter])
 
   const columns = useMemo(
     () =>
@@ -76,11 +90,15 @@ export function ExportFormListPage() {
     [canEdit],
   )
 
-  const hasActiveFilters = statusFilter !== 'all' || typeFilter !== 'all'
+  const hasActiveFilters = statusFilter !== 'all' || typeFilter !== 'all' || exportedByFilter !== 'all' || materialFilter !== 'all' || !!dateFromFilter || !!dateToFilter
 
   function clearFilters() {
     setStatusFilter('all')
     setTypeFilter('all')
+    setExportedByFilter('all')
+    setMaterialFilter('all')
+    setDateFromFilter('')
+    setDateToFilter('')
   }
 
   async function handleSubmit(values: ExportFormValues) {
@@ -155,6 +173,45 @@ export function ExportFormListPage() {
                 <SelectItem value="cancelled">Đã hủy</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={exportedByFilter} onValueChange={setExportedByFilter}>
+              <SelectTrigger className="w-36 h-9">
+                <SelectValue placeholder="Người xuất" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả người xuất</SelectItem>
+                {exportedByOptions.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={materialFilter} onValueChange={setMaterialFilter}>
+              <SelectTrigger className="w-40 h-9">
+                <SelectValue placeholder="Nguyên vật liệu" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả NVL</SelectItem>
+                {materials.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="date"
+              value={dateFromFilter}
+              onChange={(e) => setDateFromFilter(e.target.value)}
+              className="h-9 w-36"
+              title="Từ ngày"
+            />
+            <Input
+              type="date"
+              value={dateToFilter}
+              onChange={(e) => setDateToFilter(e.target.value)}
+              className="h-9 w-36"
+              title="Đến ngày"
+            />
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" className="h-9 px-2 text-muted-foreground" onClick={clearFilters}>
