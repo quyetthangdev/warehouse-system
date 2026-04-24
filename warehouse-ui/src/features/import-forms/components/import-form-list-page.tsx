@@ -53,7 +53,7 @@ export function ImportFormListPage() {
   const { forms, isLoading, createForm, updateForm, cancelForm } = useImportForms()
   const { materials } = useMaterials()
   const { suppliers } = useSuppliers()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editForm, setEditForm] = useState<ImportForm | undefined>()

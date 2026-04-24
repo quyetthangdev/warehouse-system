@@ -97,7 +97,7 @@ export function ImportFormDetailPage() {
   const navigate = useNavigate()
   const { form, isLoading, cancelForm, confirmForm, addItem } = useImportFormDetail(id!)
   const { materials } = useMaterials()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
