@@ -12,6 +12,7 @@ export const supplierSchema = z.object({
     required_error: 'Chọn điều khoản thanh toán',
     invalid_type_error: 'Điều khoản thanh toán không hợp lệ',
   }),
+  websiteUrl: z.string().optional(),
   note: z.string().optional(),
 })
 

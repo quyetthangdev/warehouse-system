@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { ApiResponse } from '@/types/api.types'
-import type { Material } from '@/features/materials/types/material.types'
+import type { Material, UnitConversion } from '@/features/materials/types/material.types'
 import type { Unit } from '@/features/units/types/unit.types'
 
 const seedUnits: Unit[] = [
@@ -20,6 +20,7 @@ type CreateMaterialBody = {
   minimumInventory: number
   maximumInventory: number
   supplierIds: string[]
+  conversions?: UnitConversion[]
 }
 
 let materials: Material[] = [
@@ -34,6 +35,18 @@ let materials: Material[] = [
     maximumInventory: 100,
     supplierIds: ['sup-001'],
     isActive: true,
+    batchCount: 2,
+    nearestExpiryDate: '2026-12-31',
+    availableStock: 45,
+    conversions: [
+      {
+        id: 'conv-001',
+        fromQty: 1,
+        fromUnitId: 'unit-001',
+        toQty: 1000,
+        toUnitId: 'unit-002',
+      },
+    ],
   },
   {
     id: 'mat-002',
@@ -46,6 +59,18 @@ let materials: Material[] = [
     maximumInventory: 200,
     supplierIds: ['sup-001', 'sup-002'],
     isActive: true,
+    batchCount: 3,
+    nearestExpiryDate: '2026-05-20',
+    availableStock: 80,
+    conversions: [
+      {
+        id: 'conv-002',
+        fromQty: 1,
+        fromUnitId: 'unit-003',
+        toQty: 1000,
+        toUnitId: 'unit-004',
+      },
+    ],
   },
   {
     id: 'mat-003',
@@ -58,6 +83,10 @@ let materials: Material[] = [
     maximumInventory: 1000,
     supplierIds: ['sup-003'],
     isActive: false,
+    batchCount: 1,
+    nearestExpiryDate: null,
+    availableStock: 350,
+    conversions: [],
   },
 ]
 
@@ -80,6 +109,10 @@ export const materialHandlers = [
       baseUnit: seedUnits.find((u) => u.id === body.baseUnitId)
         ?? { id: body.baseUnitId, name: 'Đơn vị', symbol: '-', type: 'quantity' },
       isActive: true,
+      batchCount: 0,
+      nearestExpiryDate: null,
+      availableStock: 0,
+      conversions: body.conversions ?? [],
     }
     materials = [...materials, newMaterial]
     const response: ApiResponse<Material> = { statusCode: 201, message: 'Tạo thành công', data: newMaterial }
@@ -95,7 +128,11 @@ export const materialHandlers = [
       )
     }
     const body = await request.json() as CreateMaterialBody
-    materials = materials.map((m) => (m.id === params.id ? { ...m, ...body } : m))
+    materials = materials.map((m) =>
+      m.id === params.id
+        ? { ...m, ...body, conversions: body.conversions ?? m.conversions }
+        : m,
+    )
     const updated = materials.find((m) => m.id === params.id)!
     const response: ApiResponse<Material> = { statusCode: 200, message: 'Cập nhật thành công', data: updated }
     return HttpResponse.json(response)

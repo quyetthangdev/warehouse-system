@@ -227,7 +227,7 @@ npm test -- --run --reporter=verbose
 | `/materials` | Nguyên vật liệu | ✅ Done |
 | `/suppliers` | Nhà cung cấp | ✅ Done |
 | `/inventory` | Tồn kho | 🔲 Pending |
-| `/import-forms` | Nhập kho | 🔲 Pending |
+| `/import-forms` | Nhập kho | ✅ Done |
 | `/export-forms` | Xuất kho | 🔲 Pending |
 | `/balance-forms` | Kiểm kho | 🔲 Pending |
 | `/payments` | Chi phí | 🔲 Pending |
