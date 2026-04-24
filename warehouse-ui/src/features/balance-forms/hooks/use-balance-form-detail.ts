@@ -13,14 +13,17 @@ function extractMessage(err: unknown, fallback: string): string {
 export function useBalanceFormDetail(id: string) {
   const [form, setForm] = useState<BalanceForm | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchDetail = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const { data: res } = await balanceFormService.getById(id)
       setForm(res.data)
     } catch {
       setForm(null)
+      setError('Không thể tải chi tiết phiếu kiểm')
     } finally {
       setIsLoading(false)
     }
@@ -63,5 +66,5 @@ export function useBalanceFormDetail(id: string) {
     }
   }, [id])
 
-  return { form, isLoading, startForm, completeForm, cancelForm }
+  return { form, isLoading, error, startForm, completeForm, cancelForm }
 }
