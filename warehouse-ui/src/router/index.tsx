@@ -9,6 +9,7 @@ import { SupplierListPage } from '@/features/suppliers'
 import { InventoryListPage, InventoryDetailPage } from '@/features/inventory'
 import { ImportFormListPage, ImportFormDetailPage } from '@/features/import-forms'
 import { ExportFormListPage } from '@/features/export-forms'
+import { BalanceFormListPage } from '@/features/balance-forms'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
           { path: '/import-forms', element: <ImportFormListPage /> },
           { path: '/import-forms/:id', element: <ImportFormDetailPage /> },
           { path: '/export-forms', element: <ExportFormListPage /> },
+          { path: '/balance-forms', element: <BalanceFormListPage /> },
         ],
       },
     ],
