@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { Ban, CheckCircle, ImageIcon, Paperclip, Plus, X } from 'lucide-react'
+import { Ban, CheckCircle, Plus, Printer, X } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
-import { StatusBadge } from '@/components/common/status-badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DialogClose } from '@/components/ui/dialog'
-import { WideDialog } from '@/components/common/wide-dialog'
 import {
   Select,
   SelectContent,
@@ -15,32 +13,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { WideDialog } from '@/components/common/wide-dialog'
+import { StatusBadge } from '@/components/common/status-badge'
 import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
+import { useInventory } from '@/features/inventory/hooks/use-inventory'
 import { toast } from 'react-hot-toast'
-import { useImportFormDetail } from '../hooks/use-import-form-detail'
-import { importFormStatusConfig, formatDate } from '../import-form.utils'
-import type { ImportFormItem } from '../types/import-form.types'
+import { useExportFormDetail } from '../hooks/use-export-form-detail'
+import { exportFormStatusConfig, exportTypeConfig, disposalReasonConfig, formatDate } from '../export-form.utils'
+import type { ExportFormItem } from '../types/export-form.types'
+import { buildPrintHtml } from './export-form-print-view'
 
-interface LocalAddItem {
-  materialId: string
-  materialName: string
-  unit: string
-  quantity: number
-  batchNumber: string
-  mfgDate: string
-  expiryDate: string
-  note: string
-}
+const emptyAddItem = { materialId: '', materialName: '', unit: '', quantity: 1, expiryDate: '', note: '' }
 
-const emptyAddItem: LocalAddItem = {
-  materialId: '', materialName: '', unit: '',
-  quantity: 1, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
-}
-
-const itemColumns: ColumnDef<ImportFormItem>[] = [
+const itemColumns: ColumnDef<ExportFormItem>[] = [
   { accessorKey: 'materialName', header: 'Nguyên vật liệu', size: 200 },
   {
     accessorKey: 'quantity',
@@ -49,28 +37,10 @@ const itemColumns: ColumnDef<ImportFormItem>[] = [
     cell: ({ row }) => `${row.original.quantity} ${row.original.unit}`,
   },
   {
-    accessorKey: 'batchNumber',
-    header: 'Số lô',
-    size: 100,
-    cell: ({ row }) => row.original.batchNumber ?? '—',
-  },
-  {
-    accessorKey: 'mfgDate',
-    header: 'Ngày SX',
-    size: 100,
-    cell: ({ row }) =>
-      row.original.mfgDate
-        ? formatDate(row.original.mfgDate)
-        : <span className="text-muted-foreground">—</span>,
-  },
-  {
     accessorKey: 'expiryDate',
     header: 'Hạn SD',
-    size: 100,
-    cell: ({ row }) =>
-      row.original.expiryDate
-        ? formatDate(row.original.expiryDate)
-        : <span className="text-muted-foreground">—</span>,
+    size: 110,
+    cell: ({ row }) => formatDate(row.original.expiryDate),
   },
   {
     accessorKey: 'note',
@@ -88,39 +58,46 @@ function InfoRow({ label, value, className }: { label: string; value: string; cl
   )
 }
 
-function DetailContent({ formId }: { formId: string; onClose: () => void }) {
-  const { form, isLoading, cancelForm, confirmForm, addItem } = useImportFormDetail(formId)
+function DetailContent({ formId, onClose }: { formId: string; onClose: () => void }) {
+  const { form, isLoading, confirmForm, cancelForm, addItem } = useExportFormDetail(formId)
   const { materials } = useMaterials()
+  const { items: inventoryItems } = useInventory()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [isActioning, setIsActioning] = useState(false)
   const [showAddRow, setShowAddRow] = useState(false)
-  const [addRowItem, setAddRowItem] = useState<LocalAddItem>({ ...emptyAddItem })
+  const [addRowItem, setAddRowItem] = useState({ ...emptyAddItem })
   const [isAddingItem, setIsAddingItem] = useState(false)
+
+  const addRowStock = addRowItem.materialId
+    ? (inventoryItems.find((i) => i.materialId === addRowItem.materialId)?.currentStock ?? null)
+    : null
+  const addRowStockExceeded = addRowStock !== null && addRowItem.quantity > addRowStock
+
+  void onClose
 
   function handleSelectMaterial(materialId: string) {
     const mat = materials.find((m) => m.id === materialId)
     setAddRowItem((prev) => ({
-      ...prev,
-      materialId,
-      materialName: mat?.name ?? '',
-      unit: mat?.baseUnit?.symbol ?? '',
+      ...prev, materialId, materialName: mat?.name ?? '', unit: mat?.baseUnit?.symbol ?? '',
     }))
   }
 
   async function handleAddItem() {
-    if (!addRowItem.materialId || addRowItem.quantity <= 0) return
+    if (!addRowItem.materialId || addRowItem.quantity <= 0 || !addRowItem.expiryDate) return
+    if (addRowStockExceeded && addRowStock !== null) {
+      toast.error(`Số lượng xuất vượt tồn kho hiện tại (còn ${addRowStock} ${addRowItem.unit})`)
+      return
+    }
     setIsAddingItem(true)
     const { ok, message } = await addItem({
       materialId: addRowItem.materialId,
       materialName: addRowItem.materialName,
       unit: addRowItem.unit,
       quantity: addRowItem.quantity,
-      batchNumber: addRowItem.batchNumber || undefined,
-      mfgDate: addRowItem.mfgDate || undefined,
-      expiryDate: addRowItem.expiryDate || undefined,
+      expiryDate: addRowItem.expiryDate,
       note: addRowItem.note || undefined,
     })
     setIsAddingItem(false)
@@ -138,7 +115,7 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
     const { ok, message } = await cancelForm()
     setIsActioning(false)
     if (ok) {
-      toast.success('Đã hủy phiếu nhập')
+      toast.success('Đã hủy phiếu xuất')
       setShowCancelDialog(false)
     } else {
       toast.error(message ?? 'Không thể hủy phiếu')
@@ -150,8 +127,18 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
     const { ok, message } = await confirmForm()
     setIsActioning(false)
     if (ok) {
-      toast.success('Đã xác nhận nhập kho')
+      toast.success('Đã xác nhận xuất kho')
       setShowConfirmDialog(false)
+      // BR-EXP-003: cảnh báo nếu tồn sau xuất < ngưỡng tối thiểu
+      const lowStockItems = form!.items.filter((item) => {
+        const inv = inventoryItems.find((i) => i.materialId === item.materialId)
+        if (!inv) return false
+        return (inv.currentStock - item.quantity) < inv.minThreshold
+      })
+      if (lowStockItems.length > 0) {
+        const names = lowStockItems.map((i) => i.materialName).join(', ')
+        toast(`⚠️ Tồn kho dưới mức tối thiểu: ${names}`, { duration: 5000 })
+      }
     } else {
       toast.error(message ?? 'Không thể xác nhận phiếu')
     }
@@ -160,7 +147,6 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
   if (isLoading) {
     return (
       <>
-        {/* Header skeleton */}
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
           <Skeleton className="h-6 w-32" />
           <DialogClose asChild>
@@ -179,19 +165,29 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
     return (
       <>
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0">
-          <p className="font-semibold">Phiếu nhập</p>
+          <p className="font-semibold">Phiếu xuất</p>
           <DialogClose asChild>
             <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
           </DialogClose>
         </div>
         <div className="flex-1 p-6">
-          <p className="text-muted-foreground">Không tìm thấy phiếu nhập.</p>
+          <p className="text-muted-foreground">Không tìm thấy phiếu xuất.</p>
         </div>
       </>
     )
   }
 
-  const statusCfg = importFormStatusConfig[form.status]
+  function handlePrint() {
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if (!win) return
+    win.document.write(buildPrintHtml(form!))
+    win.document.close()
+    win.focus()
+    win.onafterprint = () => win.close()
+    win.print()
+  }
+
+  const statusCfg = exportFormStatusConfig[form.status]
   const isDraft = form.status === 'draft'
 
   return (
@@ -202,38 +198,57 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
           <h2 className="text-base font-semibold">{form.code}</h2>
           <StatusBadge label={statusCfg.label} variant={statusCfg.variant} />
         </div>
-        <DialogClose asChild>
-          <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
-        </DialogClose>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-1.5" />
+            In phiếu
+          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
+          </DialogClose>
+        </div>
       </div>
 
       {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-5">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Info grid */}
-        <div className="rounded-lg border bg-card p-5">
-          <h3 className="text-sm font-semibold mb-4">Thông tin phiếu nhập</h3>
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">Thông tin phiếu xuất</h3>
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
-            <InfoRow label="Nhà cung cấp" value={form.supplierName} />
-            <InfoRow label="Người tạo" value={form.createdBy} />
-            <InfoRow label="Người yêu cầu" value={form.requestedBy} />
-            <InfoRow label="Số hóa đơn" value={form.invoiceNumber} />
-            <InfoRow label="Số PO" value={form.poNumber ?? '—'} />
-            <InfoRow label="Ngày nhập" value={formatDate(form.importDate)} />
-            <InfoRow label="Kho nhập" value={form.warehouseName ?? '—'} />
-            <InfoRow label="Loại nhập" value={form.importType ?? '—'} />
-            <InfoRow label="Người phê duyệt" value={form.approvedBy ?? '—'} />
+            <InfoRow label="Loại xuất" value={exportTypeConfig[form.exportType]?.label ?? form.exportType} />
+            <InfoRow label="Ngày xuất" value={formatDate(form.exportDate)} />
+            <InfoRow label="Người xuất" value={form.exportedBy} />
+            {form.recipient && <InfoRow label="Người nhận" value={form.recipient} />}
+            {form.approvedBy && <InfoRow label="Người phê duyệt" value={form.approvedBy} />}
+            {/* Disposal */}
+            {form.disposalReason && (
+              <InfoRow label="Lý do hủy" value={disposalReasonConfig[form.disposalReason]} />
+            )}
+            {form.disposalReasonText && (
+              <InfoRow label="Chi tiết lý do" value={form.disposalReasonText} />
+            )}
+            {/* Transfer */}
+            {form.destinationWarehouseName && (
+              <InfoRow label="Kho nhận" value={form.destinationWarehouseName} />
+            )}
+            {/* Other */}
+            {form.customReason && (
+              <InfoRow label="Mục đích xuất" value={form.customReason} />
+            )}
             {form.note && (
               <InfoRow label="Ghi chú" value={form.note} className="col-span-2 sm:col-span-3" />
             )}
           </div>
         </div>
 
+        <hr className="border-border" />
+
         {/* Items */}
-        <div className="rounded-lg border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Danh sách sản phẩm
-              <span className="ml-2 font-normal text-muted-foreground">({form.items.length})</span>
+              <span className="ml-2 normal-case font-normal">({form.items.length})</span>
             </h3>
             {canEdit && isDraft && !showAddRow && (
               <Button size="sm" variant="outline" onClick={() => setShowAddRow(true)}>
@@ -246,12 +261,7 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
           {form.items.length === 0 && !showAddRow ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Chưa có sản phẩm nào</p>
           ) : (
-            <DataTable
-              columns={itemColumns}
-              data={form.items}
-              hideToolbar
-              emptyMessage="Chưa có sản phẩm nào"
-            />
+            <DataTable columns={itemColumns} data={form.items} hideToolbar emptyMessage="Chưa có sản phẩm nào" />
           )}
 
           {showAddRow && (
@@ -259,16 +269,12 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
               <p className="text-sm font-medium">Thêm sản phẩm</p>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <div className="space-y-1 col-span-2 sm:col-span-1">
-                  <Label className="text-xs">Nguyên vật liệu *</Label>
+                  <Label className="text-xs">NVL *</Label>
                   <Select value={addRowItem.materialId} onValueChange={handleSelectMaterial}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn NVL" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Chọn NVL" /></SelectTrigger>
                     <SelectContent>
                       {materials.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name} ({m.baseUnit.symbol})
-                        </SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} ({m.baseUnit.symbol})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -277,42 +283,28 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
                   <Label className="text-xs">Số lượng *</Label>
                   <div className="flex items-center gap-1.5">
                     <Input
-                      type="number"
-                      min={1}
+                      type="number" min={1}
                       value={addRowItem.quantity}
                       onChange={(e) => setAddRowItem((p) => ({ ...p, quantity: Number(e.target.value) }))}
-                      className="flex-1"
+                      className={`flex-1 ${addRowStockExceeded ? 'border-destructive' : ''}`}
                     />
-                    {addRowItem.unit && (
-                      <span className="text-sm text-muted-foreground shrink-0">{addRowItem.unit}</span>
-                    )}
+                    {addRowItem.unit && <span className="text-sm text-muted-foreground shrink-0">{addRowItem.unit}</span>}
                   </div>
+                  {addRowStockExceeded && addRowStock !== null && (
+                    <p className="text-xs text-destructive">
+                      Vượt tồn kho (còn {addRowStock} {addRowItem.unit})
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Số lô</Label>
-                  <Input
-                    placeholder="VD: L001"
-                    value={addRowItem.batchNumber}
-                    onChange={(e) => setAddRowItem((p) => ({ ...p, batchNumber: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Ngày sản xuất</Label>
-                  <Input
-                    type="date"
-                    value={addRowItem.mfgDate}
-                    onChange={(e) => setAddRowItem((p) => ({ ...p, mfgDate: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Hạn sử dụng</Label>
+                  <Label className="text-xs">Hạn sử dụng *</Label>
                   <Input
                     type="date"
                     value={addRowItem.expiryDate}
                     onChange={(e) => setAddRowItem((p) => ({ ...p, expiryDate: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 col-span-2 sm:col-span-3">
                   <Label className="text-xs">Ghi chú</Label>
                   <Input
                     placeholder="Ghi chú"
@@ -323,18 +315,14 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
               </div>
               <div className="flex justify-end gap-2">
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isAddingItem}
+                  type="button" variant="outline" size="sm" disabled={isAddingItem}
                   onClick={() => { setShowAddRow(false); setAddRowItem({ ...emptyAddItem }) }}
                 >
                   Hủy
                 </Button>
                 <Button
-                  type="button"
-                  size="sm"
-                  disabled={!addRowItem.materialId || addRowItem.quantity <= 0 || isAddingItem}
+                  type="button" size="sm"
+                  disabled={!addRowItem.materialId || addRowItem.quantity <= 0 || !addRowItem.expiryDate || isAddingItem}
                   onClick={handleAddItem}
                 >
                   {isAddingItem ? 'Đang thêm...' : 'Thêm'}
@@ -343,71 +331,25 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
             </div>
           )}
         </div>
-
-        {/* Invoice image */}
-        <div className="rounded-lg border bg-card p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Ảnh hóa đơn</h3>
-          </div>
-          {form.invoiceImageName ? (
-            <div className="flex items-center gap-2 text-sm">
-              <ImageIcon className="h-4 w-4 text-primary" />
-              <span>{form.invoiceImageName}</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-8 text-center">
-              <ImageIcon className="h-7 w-7 text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Chưa có ảnh hóa đơn</p>
-            </div>
-          )}
-        </div>
-
-        {/* Attachments */}
-        <div className="rounded-lg border bg-card p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Paperclip className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">File đính kèm</h3>
-          </div>
-          {form.attachmentNames && form.attachmentNames.length > 0 ? (
-            <div className="space-y-2">
-              {form.attachmentNames.map((name, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <Paperclip className="h-4 w-4 text-muted-foreground" />
-                  <span>{name}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-8 text-center">
-              <Paperclip className="h-7 w-7 text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">Chưa có file đính kèm</p>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Sticky footer — only for draft + canEdit */}
+      {/* Sticky footer — draft + canEdit only */}
       {canEdit && isDraft && (
         <div className="border-t px-6 py-3 flex justify-end gap-2 shrink-0 bg-background">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowCancelDialog(true)}
-          >
+          <Button variant="destructive" size="sm" onClick={() => setShowCancelDialog(true)}>
             <Ban className="h-4 w-4 mr-1.5" />
             Hủy phiếu
           </Button>
           <Button size="sm" onClick={() => setShowConfirmDialog(true)}>
             <CheckCircle className="h-4 w-4 mr-1.5" />
-            Xác nhận nhập kho
+            Xác nhận xuất kho
           </Button>
         </div>
       )}
 
       <ConfirmDialog
         open={showCancelDialog}
-        title="Hủy phiếu nhập"
+        title="Hủy phiếu xuất"
         description={`Bạn có chắc muốn hủy phiếu "${form.code}"? Hành động này không thể hoàn tác.`}
         icon={Ban}
         confirmLabel="Hủy phiếu"
@@ -418,8 +360,8 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
       />
       <ConfirmDialog
         open={showConfirmDialog}
-        title="Xác nhận nhập kho"
-        description={`Xác nhận nhập kho phiếu "${form.code}"? Tồn kho sẽ được cập nhật sau khi xác nhận.`}
+        title="Xác nhận xuất kho"
+        description={`Xác nhận xuất kho phiếu "${form.code}"? Tồn kho sẽ được cập nhật sau khi xác nhận.`}
         icon={CheckCircle}
         confirmLabel="Xác nhận"
         isLoading={isActioning}
@@ -430,7 +372,7 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
   )
 }
 
-export function ImportFormDetailDialog({
+export function ExportFormDetailDialog({
   formId,
   onClose,
 }: {

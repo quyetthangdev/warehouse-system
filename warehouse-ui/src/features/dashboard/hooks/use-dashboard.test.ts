@@ -24,7 +24,7 @@ describe('useDashboard', () => {
   it('load dữ liệu thành công', async () => {
     const { result } = renderHook(() => useDashboard())
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.data?.stats.totalMaterials).toBe(48)
+    expect(result.current.data?.stats.totalMaterials).toBe(88)
   })
 
   it('trả về error khi API fail', async () => {

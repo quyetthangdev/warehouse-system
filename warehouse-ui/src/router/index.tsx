@@ -8,6 +8,7 @@ import { MaterialListPage } from '@/features/materials'
 import { SupplierListPage } from '@/features/suppliers'
 import { InventoryListPage, InventoryDetailPage } from '@/features/inventory'
 import { ImportFormListPage, ImportFormDetailPage } from '@/features/import-forms'
+import { ExportFormListPage } from '@/features/export-forms'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
           { path: '/inventory/:materialId', element: <InventoryDetailPage /> },
           { path: '/import-forms', element: <ImportFormListPage /> },
           { path: '/import-forms/:id', element: <ImportFormDetailPage /> },
+          { path: '/export-forms', element: <ExportFormListPage /> },
         ],
       },
     ],

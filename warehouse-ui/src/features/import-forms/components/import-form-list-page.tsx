@@ -12,7 +12,7 @@ import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { PageContainer } from '@/components/layout/page-container'
 import { useAuthStore } from '@/stores/auth.store'
-import { toast } from 'sonner'
+import { toast } from 'react-hot-toast'
 import { Ban } from 'lucide-react'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
 import { useSuppliers } from '@/features/suppliers/hooks/use-suppliers'
@@ -53,7 +53,7 @@ export function ImportFormListPage() {
   const { forms, isLoading, createForm, updateForm, cancelForm } = useImportForms()
   const { materials } = useMaterials()
   const { suppliers } = useSuppliers()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editForm, setEditForm] = useState<ImportForm | undefined>()

@@ -19,7 +19,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { DataTable } from '@/components/common/data-table'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
-import { toast } from 'sonner'
+import { toast } from 'react-hot-toast'
 import { useImportFormDetail } from '../hooks/use-import-form-detail'
 import { importFormStatusConfig, formatDate } from '../import-form.utils'
 import type { ImportFormItem } from '../types/import-form.types'
@@ -97,7 +97,7 @@ export function ImportFormDetailPage() {
   const navigate = useNavigate()
   const { form, isLoading, cancelForm, confirmForm, addItem } = useImportFormDetail(id!)
   const { materials } = useMaterials()
-  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager']))
+  const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
