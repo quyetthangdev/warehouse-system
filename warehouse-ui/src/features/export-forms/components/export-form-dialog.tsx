@@ -18,18 +18,21 @@ import { exportFormSchema, type ExportFormValues } from '../schemas/export-form.
 import { WAREHOUSES, exportTypeConfig, disposalReasonConfig } from '../export-form.utils'
 import type { ExportForm, ExportFormItem } from '../types/export-form.types'
 import type { Material } from '@/features/materials/types/material.types'
+import { toast } from 'sonner'
+import type { InventoryItem } from '@/features/inventory/types/inventory.types'
 
 interface ExportFormDialogProps {
   open: boolean
   form?: ExportForm
   materials: Material[]
+  inventoryItems: InventoryItem[]
   onSubmit: (values: ExportFormValues) => Promise<void>
   onClose: () => void
 }
 
 const emptyItem = { materialId: '', materialName: '', unit: '', quantity: 1, expiryDate: '', note: '' }
 
-export function ExportFormDialog({ open, form, materials, onSubmit, onClose }: ExportFormDialogProps) {
+export function ExportFormDialog({ open, form, materials, inventoryItems, onSubmit, onClose }: ExportFormDialogProps) {
   const {
     register,
     handleSubmit,
@@ -48,6 +51,11 @@ export function ExportFormDialog({ open, form, materials, onSubmit, onClose }: E
   const [items, setItems] = useState<ExportFormItem[]>([])
   const [addItem, setAddItem] = useState({ ...emptyItem })
   const [showAddRow, setShowAddRow] = useState(false)
+
+  const currentStock = addItem.materialId
+    ? (inventoryItems.find((i) => i.materialId === addItem.materialId)?.currentStock ?? null)
+    : null
+  const stockExceeded = currentStock !== null && addItem.quantity > currentStock
 
   useEffect(() => {
     if (open) {
@@ -95,6 +103,14 @@ export function ExportFormDialog({ open, form, materials, onSubmit, onClose }: E
   }
 
   async function handleFormSubmit(values: ExportFormValues) {
+    const exceeded = items.find((item) => {
+      const stock = inventoryItems.find((i) => i.materialId === item.materialId)?.currentStock ?? Infinity
+      return item.quantity > stock
+    })
+    if (exceeded) {
+      toast.error(`"${exceeded.materialName}" vượt tồn kho hiện tại`)
+      return
+    }
     await onSubmit({ ...values, items: items as ExportFormValues['items'] })
   }
 
@@ -271,10 +287,15 @@ export function ExportFormDialog({ open, form, materials, onSubmit, onClose }: E
                           min={1}
                           value={addItem.quantity}
                           onChange={(e) => setAddItem((p) => ({ ...p, quantity: Number(e.target.value) }))}
-                          className="flex-1"
+                          className={`flex-1 ${stockExceeded ? 'border-destructive' : ''}`}
                         />
                         {addItem.unit && <span className="text-sm text-muted-foreground shrink-0">{addItem.unit}</span>}
                       </div>
+                      {stockExceeded && currentStock !== null && (
+                        <p className="text-xs text-destructive">
+                          Vượt tồn kho (còn {currentStock} {addItem.unit})
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Hạn sử dụng *</Label>

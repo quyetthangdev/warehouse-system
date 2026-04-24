@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { toast } from 'sonner'
 import { Ban } from 'lucide-react'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
+import { useInventory } from '@/features/inventory/hooks/use-inventory'
 import { useExportForms } from '../hooks/use-export-forms'
 import { ExportFormDialog } from './export-form-dialog'
 import { ExportFormDetailDialog } from './export-form-detail-dialog'
@@ -44,6 +45,7 @@ function exportToCSV(forms: ExportForm[]) {
 export function ExportFormListPage() {
   const { forms, isLoading, createForm, updateForm, cancelForm } = useExportForms()
   const { materials } = useMaterials()
+  const { items: inventoryItems } = useInventory()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -172,6 +174,7 @@ export function ExportFormListPage() {
         open={dialogOpen}
         form={editForm}
         materials={materials}
+        inventoryItems={inventoryItems}
         onSubmit={handleSubmit}
         onClose={() => { setDialogOpen(false); setEditForm(undefined) }}
       />
