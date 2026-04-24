@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Package, BarChart2, AlertTriangle, Clock, Search, Download } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { Package, BarChart2, AlertTriangle, Clock, Search, Download, Bell } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -61,9 +62,15 @@ export function DashboardPage() {
     <PageContainer
       title="Tổng quan"
       actions={
-        <FilterDropdown
-          onApply={({ frequency }) => setSelectedDays(Number(frequency))}
-        />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => toast.success('Thành công!')}>
+            <Bell className="h-4 w-4 mr-1.5" />
+            Test Toast
+          </Button>
+          <FilterDropdown
+            onApply={({ frequency }) => setSelectedDays(Number(frequency))}
+          />
+        </div>
       }
     >
       <div className="space-y-4">

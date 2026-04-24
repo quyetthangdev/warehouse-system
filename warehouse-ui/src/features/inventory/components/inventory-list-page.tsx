@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Download } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from 'react-hot-toast'
 import {
   Select,
   SelectContent,

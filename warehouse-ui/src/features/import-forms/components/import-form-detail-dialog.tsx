@@ -19,7 +19,7 @@ import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
-import { toast } from 'sonner'
+import { toast } from 'react-hot-toast'
 import { useImportFormDetail } from '../hooks/use-import-form-detail'
 import { importFormStatusConfig, formatDate } from '../import-form.utils'
 import type { ImportFormItem } from '../types/import-form.types'
@@ -88,7 +88,7 @@ function InfoRow({ label, value, className }: { label: string; value: string; cl
   )
 }
 
-function DetailContent({ formId, onClose }: { formId: string; onClose: () => void }) {
+function DetailContent({ formId }: { formId: string; onClose: () => void }) {
   const { form, isLoading, cancelForm, confirmForm, addItem } = useImportFormDetail(formId)
   const { materials } = useMaterials()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
