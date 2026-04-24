@@ -52,6 +52,12 @@ export const exportFormHandlers = [
     if (!existing) {
       return HttpResponse.json({ statusCode: 404, message: 'Không tìm thấy' }, { status: 404 })
     }
+    if (existing.status !== 'draft') {
+      return HttpResponse.json(
+        { statusCode: 400, message: 'Chỉ có thể chỉnh sửa phiếu nháp' },
+        { status: 400 },
+      )
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = await request.json() as any
     const warehouse = WAREHOUSES.find((w) => w.id === body.destinationWarehouseId)
