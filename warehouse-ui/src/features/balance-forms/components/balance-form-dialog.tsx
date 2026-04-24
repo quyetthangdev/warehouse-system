@@ -116,7 +116,7 @@ export function BalanceFormDialog({ open, onSubmit, onClose }: BalanceFormDialog
   }
 
   async function handleFormSubmit(values: BalanceFormValues) {
-    await onSubmit({ ...values, attachmentNames })
+    await onSubmit(values)
   }
 
   return (
