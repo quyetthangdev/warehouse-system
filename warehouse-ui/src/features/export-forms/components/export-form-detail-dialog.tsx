@@ -19,6 +19,7 @@ import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
+import { useInventory } from '@/features/inventory/hooks/use-inventory'
 import { toast } from 'sonner'
 import { useExportFormDetail } from '../hooks/use-export-form-detail'
 import { exportFormStatusConfig, exportTypeConfig, disposalReasonConfig, formatDate } from '../export-form.utils'
@@ -59,6 +60,7 @@ function InfoRow({ label, value, className }: { label: string; value: string; cl
 function DetailContent({ formId, onClose }: { formId: string; onClose: () => void }) {
   const { form, isLoading, confirmForm, cancelForm, addItem } = useExportFormDetail(formId)
   const { materials } = useMaterials()
+  const { items: inventoryItems } = useInventory()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
 
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -67,6 +69,11 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
   const [showAddRow, setShowAddRow] = useState(false)
   const [addRowItem, setAddRowItem] = useState({ ...emptyAddItem })
   const [isAddingItem, setIsAddingItem] = useState(false)
+
+  const addRowStock = addRowItem.materialId
+    ? (inventoryItems.find((i) => i.materialId === addRowItem.materialId)?.currentStock ?? null)
+    : null
+  const addRowStockExceeded = addRowStock !== null && addRowItem.quantity > addRowStock
 
   void onClose
 
@@ -79,6 +86,10 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
 
   async function handleAddItem() {
     if (!addRowItem.materialId || addRowItem.quantity <= 0 || !addRowItem.expiryDate) return
+    if (addRowStockExceeded && addRowStock !== null) {
+      toast.error(`Số lượng xuất vượt tồn kho hiện tại (còn ${addRowStock} ${addRowItem.unit})`)
+      return
+    }
     setIsAddingItem(true)
     const { ok, message } = await addItem({
       materialId: addRowItem.materialId,
@@ -246,10 +257,15 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
                       type="number" min={1}
                       value={addRowItem.quantity}
                       onChange={(e) => setAddRowItem((p) => ({ ...p, quantity: Number(e.target.value) }))}
-                      className="flex-1"
+                      className={`flex-1 ${addRowStockExceeded ? 'border-destructive' : ''}`}
                     />
                     {addRowItem.unit && <span className="text-sm text-muted-foreground shrink-0">{addRowItem.unit}</span>}
                   </div>
+                  {addRowStockExceeded && addRowStock !== null && (
+                    <p className="text-xs text-destructive">
+                      Vượt tồn kho (còn {addRowStock} {addRowItem.unit})
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Hạn sử dụng *</Label>
