@@ -1,13 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { MoreHorizontal, Eye } from 'lucide-react'
+import { Ban, Eye, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from '@/components/common/status-badge'
+import { DataTableColumnHeader } from '@/components/common/data-table-column-header'
 import { balanceFormStatusConfig, balanceTypeConfig, formatDate } from '../balance-form.utils'
 import type { BalanceForm } from '../types/balance-form.types'
 
@@ -21,7 +24,9 @@ export function getColumns({ canEdit, onViewDetail, onCancel }: ColumnOptions): 
   return [
     {
       accessorKey: 'code',
-      header: 'Mã phiếu',
+      meta: { label: 'Mã phiếu' },
+      size: 130,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Mã phiếu" />,
       cell: ({ row }) => (
         <button
           className="font-medium text-primary hover:underline"
@@ -33,32 +38,45 @@ export function getColumns({ canEdit, onViewDetail, onCancel }: ColumnOptions): 
     },
     {
       accessorKey: 'balanceDate',
-      header: 'Ngày kiểm',
+      meta: { label: 'Ngày kiểm' },
+      size: 110,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày kiểm" />,
       cell: ({ row }) => formatDate(row.original.balanceDate),
     },
     {
       accessorKey: 'balanceType',
-      header: 'Loại kiểm',
+      meta: { label: 'Loại kiểm' },
+      size: 110,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Loại kiểm" />,
       cell: ({ row }) => balanceTypeConfig[row.original.balanceType],
     },
     {
       accessorKey: 'scope',
-      header: 'Phạm vi',
+      meta: { label: 'Phạm vi' },
+      size: 100,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Phạm vi" />,
       cell: ({ row }) => row.original.scope === 'full' ? 'Toàn bộ' : 'Một phần',
     },
     {
       accessorKey: 'inspectors',
-      header: 'Người kiểm',
+      meta: { label: 'Người kiểm' },
+      size: 180,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Người kiểm" />,
       cell: ({ row }) => row.original.inspectors.join(', '),
     },
     {
       id: 'itemCount',
+      meta: { label: 'Số NVL' },
+      size: 80,
       header: 'Số NVL',
+      enableSorting: false,
       cell: ({ row }) => row.original.items.length,
     },
     {
       accessorKey: 'status',
-      header: 'Trạng thái',
+      meta: { label: 'Trạng thái' },
+      size: 120,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Trạng thái" />,
       cell: ({ row }) => {
         const cfg = balanceFormStatusConfig[row.original.status]
         return <StatusBadge label={cfg.label} variant={cfg.variant} />
@@ -66,6 +84,9 @@ export function getColumns({ canEdit, onViewDetail, onCancel }: ColumnOptions): 
     },
     {
       id: 'actions',
+      size: 80,
+      enableSorting: false,
+      enableHiding: false,
       cell: ({ row }) => {
         const form = row.original
         const canCancel = canEdit && (form.status === 'draft' || form.status === 'in_progress')
@@ -77,15 +98,15 @@ export function getColumns({ canEdit, onViewDetail, onCancel }: ColumnOptions): 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onViewDetail(form.id)}>
-                <Eye className="mr-2 h-4 w-4" />
+                <Eye className="h-4 w-4" />
                 Xem chi tiết
               </DropdownMenuItem>
               {canCancel && (
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => onCancel(form)}
-                >
+                <DropdownMenuItem variant="destructive" onClick={() => onCancel(form)}>
+                  <Ban className="h-4 w-4" />
                   Hủy phiếu
                 </DropdownMenuItem>
               )}
