@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Download, Plus } from 'lucide-react'
+import { Download, Plus, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -12,6 +12,7 @@ import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { PageContainer } from '@/components/layout/page-container'
 import { useAuthStore } from '@/stores/auth.store'
+import { useWarehouseStore } from '@/stores/warehouse.store'
 import { toast } from 'react-hot-toast'
 import { Ban } from 'lucide-react'
 import { useMaterials } from '@/features/materials/hooks/use-materials'
@@ -54,6 +55,7 @@ export function ImportFormListPage() {
   const { materials } = useMaterials()
   const { suppliers } = useSuppliers()
   const canEdit = useAuthStore((s) => s.hasPermission(['admin', 'manager', 'supervisor']))
+  const lockedByFormId = useWarehouseStore((s) => s.lockedByFormId)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editForm, setEditForm] = useState<ImportForm | undefined>()
@@ -138,13 +140,23 @@ export function ImportFormListPage() {
       title="Nhập kho"
       actions={
         canEdit ? (
-          <Button onClick={() => { setEditForm(undefined); setDialogOpen(true) }}>
+          <Button
+            onClick={() => { setEditForm(undefined); setDialogOpen(true) }}
+            disabled={!!lockedByFormId}
+            title={lockedByFormId ? 'Kho đang trong quá trình kiểm kho' : undefined}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Tạo phiếu nhập
           </Button>
         ) : undefined
       }
     >
+      {lockedByFormId && (
+        <div className="flex items-center gap-2 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-300 mb-4">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          Kho đang trong quá trình kiểm kho. Không thể tạo phiếu nhập mới.
+        </div>
+      )}
       <DataTable
         columns={columns}
         data={filtered}
