@@ -43,6 +43,7 @@ export const paymentTermsConfig: Record<PaymentTerms, string> = {
 }
 
 export function formatVnd(amount: number): string {
+  if (!Number.isFinite(amount) || amount < 0) return '—'
   if (amount === 0) return '0 đ'
   return new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
 }
@@ -54,7 +55,11 @@ export function formatDate(d: string): string {
 }
 
 export function calcDueDate(paymentDate: string, debtDays: number): string {
-  const date = new Date(paymentDate)
-  date.setDate(date.getDate() + debtDays)
-  return date.toISOString().split('T')[0]
+  const [y, m, d] = paymentDate.split('-').map(Number)
+  const date = new Date(y, m - 1, d + debtDays)
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
 }
