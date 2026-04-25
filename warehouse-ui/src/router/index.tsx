@@ -10,6 +10,7 @@ import { InventoryListPage, InventoryDetailPage } from '@/features/inventory'
 import { ImportFormListPage, ImportFormDetailPage } from '@/features/import-forms'
 import { ExportFormListPage } from '@/features/export-forms'
 import { BalanceFormListPage } from '@/features/balance-forms'
+import { PaymentListPage } from '@/features/payments'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
           { path: '/import-forms/:id', element: <ImportFormDetailPage /> },
           { path: '/export-forms', element: <ExportFormListPage /> },
           { path: '/balance-forms', element: <BalanceFormListPage /> },
+          { path: '/payments', element: <PaymentListPage /> },
         ],
       },
     ],
