@@ -9,7 +9,7 @@ export function RootLayout() {
       <AppSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <AppHeader />
-        <div className="bg-background px-6 py-2">
+        <div className="bg-muted/40 px-6 py-2">
           <AppBreadcrumb />
         </div>
         <main className="flex-1 overflow-auto bg-muted/40">

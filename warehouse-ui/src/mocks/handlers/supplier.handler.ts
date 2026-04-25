@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { ApiResponse } from '@/types/api.types'
 import type { Supplier } from '@/features/suppliers/types/supplier.types'
+import type { ImportForm } from '@/features/import-forms/types/import-form.types'
 
 const BASE_URL = 'http://localhost:3000'
 
@@ -45,6 +46,60 @@ let suppliers: Supplier[] = [
   },
 ]
 
+const MOCK_TRANSACTIONS: Record<string, ImportForm[]> = {
+  'sup-001': [
+    {
+      id: 'pn-001',
+      code: 'PN-2025-001',
+      supplierId: 'sup-001',
+      supplierName: 'Công ty TNHH Cà Phê Việt',
+      invoiceNumber: 'HD-2025-001',
+      poNumber: 'PO-001',
+      importDate: '2025-12-22',
+      importType: 'Mua hàng',
+      status: 'draft',
+      requestedBy: 'Nguyễn Văn A',
+      createdBy: 'Nguyễn Văn A',
+      createdAt: '2025-12-22T08:00:00Z',
+      items: [],
+    },
+    {
+      id: 'pn-003',
+      code: 'PN-2025-003',
+      supplierId: 'sup-001',
+      supplierName: 'Công ty TNHH Cà Phê Việt',
+      invoiceNumber: 'HD-2025-003',
+      poNumber: 'PO-003',
+      importDate: '2025-12-22',
+      importType: 'Nhập trả lại',
+      status: 'cancelled',
+      requestedBy: 'Nguyễn Văn A',
+      createdBy: 'Nguyễn Văn A',
+      createdAt: '2025-12-22T10:00:00Z',
+      items: [],
+    },
+  ],
+  'sup-002': [
+    {
+      id: 'pn-002',
+      code: 'PN-2025-002',
+      supplierId: 'sup-002',
+      supplierName: 'HTX Nông sản Đà Lạt',
+      invoiceNumber: 'HD-2025-002',
+      poNumber: 'PO-002',
+      importDate: '2025-12-22',
+      importType: 'Mua hàng',
+      status: 'confirmed',
+      requestedBy: 'Nguyễn Văn A',
+      approvedBy: 'Nguyễn Văn B',
+      createdBy: 'Nguyễn Văn A',
+      createdAt: '2025-12-22T09:00:00Z',
+      updatedAt: '2025-12-22T10:00:00Z',
+      items: [],
+    },
+  ],
+}
+
 export const supplierHandlers = [
   http.get(`${BASE_URL}/suppliers`, () => {
     const response: ApiResponse<Supplier[]> = { statusCode: 200, message: 'OK', data: suppliers }
@@ -72,6 +127,15 @@ export const supplierHandlers = [
     const updated = suppliers.find((s) => s.id === params.id)!
     const response: ApiResponse<Supplier> = { statusCode: 200, message: 'Cập nhật thành công', data: updated }
     return HttpResponse.json(response)
+  }),
+
+  http.get(`${BASE_URL}/suppliers/:id/transactions`, ({ params }) => {
+    const transactions = MOCK_TRANSACTIONS[params.id as string] ?? []
+    return HttpResponse.json<ApiResponse<ImportForm[]>>({
+      statusCode: 200,
+      message: 'OK',
+      data: transactions,
+    })
   }),
 
   http.delete(`${BASE_URL}/suppliers/:id`, ({ params }) => {

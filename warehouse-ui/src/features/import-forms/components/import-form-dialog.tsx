@@ -35,6 +35,7 @@ interface LocalItem {
   materialName: string
   unit: string
   quantity: number
+  unitPrice: number
   batchNumber: string
   mfgDate: string
   expiryDate: string
@@ -43,7 +44,7 @@ interface LocalItem {
 
 const emptyAddItem: LocalItem = {
   materialId: '', materialName: '', unit: '',
-  quantity: 1, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
+  quantity: 1, unitPrice: 0, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
 }
 
 const importTypeOptions = ['Mua hàng', 'Nhập trả lại', 'Điều chuyển', 'Khác']
@@ -103,6 +104,7 @@ export function ImportFormDialog({
             materialName: i.materialName,
             unit: i.unit,
             quantity: i.quantity,
+            unitPrice: i.unitPrice,
             batchNumber: i.batchNumber ?? '',
             mfgDate: i.mfgDate ?? '',
             expiryDate: i.expiryDate ?? '',
@@ -156,6 +158,7 @@ export function ImportFormDialog({
         materialName: item.materialName,
         unit: item.unit,
         quantity: item.quantity,
+        unitPrice: item.unitPrice,
         batchNumber: item.batchNumber || undefined,
         mfgDate: item.mfgDate || undefined,
         expiryDate: item.expiryDate || undefined,
@@ -367,6 +370,19 @@ export function ImportFormDialog({
                           </span>
                         )}
                       </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">Đơn giá (VNĐ) *</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder="VD: 15000"
+                        value={addItem.unitPrice || ''}
+                        onChange={(e) =>
+                          setAddItem((prev) => ({ ...prev, unitPrice: Number(e.target.value) }))
+                        }
+                      />
                     </div>
 
                     <div className="space-y-1">

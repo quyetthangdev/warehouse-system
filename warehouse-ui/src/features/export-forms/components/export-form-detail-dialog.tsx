@@ -37,6 +37,24 @@ const itemColumns: ColumnDef<ExportFormItem>[] = [
     cell: ({ row }) => `${row.original.quantity} ${row.original.unit}`,
   },
   {
+    accessorKey: 'unitPrice',
+    header: 'Đơn giá',
+    size: 120,
+    cell: ({ row }) =>
+      row.original.unitPrice != null
+        ? new Intl.NumberFormat('vi-VN').format(row.original.unitPrice) + ' đ'
+        : '—',
+  },
+  {
+    id: 'lineTotal',
+    header: 'Thành tiền',
+    size: 130,
+    cell: ({ row }) => {
+      const total = (row.original.unitPrice ?? 0) * row.original.quantity
+      return new Intl.NumberFormat('vi-VN').format(total) + ' đ'
+    },
+  },
+  {
     accessorKey: 'expiryDate',
     header: 'Hạn SD',
     size: 110,
@@ -237,6 +255,16 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
             )}
             {form.note && (
               <InfoRow label="Ghi chú" value={form.note} className="col-span-2 sm:col-span-3" />
+            )}
+            {(form.totalValue != null || form.items.length > 0) && (
+              <div className="col-span-2 sm:col-span-3 pt-2 border-t">
+                <p className="text-xs text-muted-foreground mb-0.5">Tổng giá trị</p>
+                <p className="text-sm font-semibold text-primary">
+                  {new Intl.NumberFormat('vi-VN').format(
+                    form.totalValue ?? form.items.reduce((s, i) => s + (i.unitPrice ?? 0) * i.quantity, 0)
+                  )} đ
+                </p>
+              </div>
             )}
           </div>
         </div>

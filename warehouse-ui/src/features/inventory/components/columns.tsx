@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/common/status-badge'
 import { DataTableColumnHeader } from '@/components/common/data-table-column-header'
-import { statusConfig } from '../inventory.utils'
+import { statusConfig, formatVnd } from '../inventory.utils'
 import type { InventoryItem } from '../types/inventory.types'
 import type { MaterialCategory } from '@/features/materials/types/material.types'
 
@@ -14,6 +14,9 @@ const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
   { value: 'consumable', label: 'Vật tư tiêu hao' },
   { value: 'spare_part', label: 'Phụ tùng' },
 ]
+
+const DAYS_30 = 30 * 24 * 60 * 60 * 1000
+const DAYS_90 = 90 * 24 * 60 * 60 * 1000
 
 interface GetColumnsArgs {
   onNavigate: (materialId: string) => void
@@ -67,13 +70,32 @@ export function getColumns({ onNavigate }: GetColumnsArgs): ColumnDef<InventoryI
     {
       accessorKey: 'nearestExpiryDate',
       meta: { label: 'HSD' },
-      size: 110,
+      size: 140,
       header: ({ column }) => <DataTableColumnHeader column={column} title="HSD" />,
       cell: ({ row }) => {
         const d = row.original.nearestExpiryDate
+        const count = row.original.nearExpiryBatchCount
         if (!d) return <span className="text-muted-foreground">—</span>
         const [y, m, day] = d.split('-')
-        return <span>{`${day}/${m}/${y}`}</span>
+        const formatted = `${day}/${m}/${y}`
+        const msLeft = new Date(d).getTime() - Date.now()
+        const isCritical = count > 0 && msLeft <= DAYS_30
+        const isWarning = count > 0 && msLeft > DAYS_30 && msLeft <= DAYS_90
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={isCritical ? 'text-destructive font-medium' : isWarning ? 'text-yellow-600 dark:text-yellow-400' : ''}>
+              {formatted}
+            </span>
+            {isCritical && (
+              <Badge variant="destructive" className="text-xs px-1 py-0 h-4">Sắp HH · {count} lô</Badge>
+            )}
+            {isWarning && (
+              <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-yellow-400 dark:border-yellow-500 text-yellow-600 dark:text-yellow-400">
+                {count} lô
+              </Badge>
+            )}
+          </div>
+        )
       },
     },
     {
@@ -82,6 +104,13 @@ export function getColumns({ onNavigate }: GetColumnsArgs): ColumnDef<InventoryI
       size: 160,
       header: ({ column }) => <DataTableColumnHeader column={column} title="Tồn kho khả dụng" />,
       cell: ({ row }) => `${row.original.currentStock} ${row.original.unit}`,
+    },
+    {
+      accessorKey: 'stockValue',
+      meta: { label: 'Giá trị tồn' },
+      size: 140,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Giá trị tồn" />,
+      cell: ({ row }) => formatVnd(row.original.stockValue),
     },
     {
       accessorKey: 'status',

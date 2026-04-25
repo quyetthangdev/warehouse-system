@@ -20,6 +20,8 @@ type CreateMaterialBody = {
   minimumInventory: number
   maximumInventory: number
   supplierIds: string[]
+  isExpiry: boolean
+  location?: string
   conversions?: UnitConversion[]
 }
 
@@ -38,6 +40,8 @@ let materials: Material[] = [
     batchCount: 2,
     nearestExpiryDate: '2026-12-31',
     availableStock: 45,
+    isExpiry: true,
+    location: 'Kệ A1',
     conversions: [
       {
         id: 'conv-001',
@@ -62,6 +66,8 @@ let materials: Material[] = [
     batchCount: 3,
     nearestExpiryDate: '2026-05-20',
     availableStock: 80,
+    isExpiry: true,
+    location: 'Tủ lạnh B1',
     conversions: [
       {
         id: 'conv-002',
@@ -86,6 +92,8 @@ let materials: Material[] = [
     batchCount: 1,
     nearestExpiryDate: null,
     availableStock: 350,
+    isExpiry: false,
+    location: 'Kệ C2',
     conversions: [],
   },
 ]

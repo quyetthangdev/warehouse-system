@@ -11,6 +11,7 @@ describe('cn', () => {
   })
 
   it('ignores falsy values', () => {
-    expect(cn('px-2', false && 'hidden', undefined)).toBe('px-2')
+    const condition = false
+    expect(cn('px-2', condition && 'hidden', undefined)).toBe('px-2')
   })
 })

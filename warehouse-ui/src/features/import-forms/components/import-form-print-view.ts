@@ -1,48 +1,51 @@
-import {
-  balanceTypeConfig,
-  balanceFormStatusConfig,
-  discrepancyReasonConfig,
-  formatDate,
-} from '../balance-form.utils'
-import type { BalanceForm } from '../types/balance-form.types'
+import { importFormStatusConfig, formatDate } from '../import-form.utils'
+import type { ImportForm } from '../types/import-form.types'
 
 function esc(s: string | null | undefined): string {
   return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-export function buildPrintHtml(form: BalanceForm): string {
-  const statusCfg = balanceFormStatusConfig[form.status]
+function fmtVnd(n: number): string {
+  return new Intl.NumberFormat('vi-VN').format(n) + ' đ'
+}
 
-  const itemRows = form.items.map((item, idx) => `
+export function buildPrintHtml(form: ImportForm): string {
+  const statusCfg = importFormStatusConfig[form.status]
+
+  const itemRows = form.items.map((item, idx) => {
+    const lineTotal = (item.unitPrice ?? 0) * item.quantity
+    return `
     <tr>
       <td style="text-align:center">${idx + 1}</td>
       <td>${esc(item.materialName)}</td>
-      <td>${esc(item.lotNumber)}</td>
-      <td>${esc(item.goodsCondition)}</td>
       <td>${esc(item.unit)}</td>
-      <td style="text-align:right">${item.systemQuantity}</td>
-      <td style="text-align:right">${item.actualQuantity ?? ''}</td>
-      <td style="text-align:right">${item.discrepancy !== null ? (item.discrepancy > 0 ? '+' : '') + item.discrepancy : ''}</td>
-      <td style="text-align:right">${item.discrepancyPercent !== null ? (item.discrepancyPercent > 0 ? '+' : '') + item.discrepancyPercent.toFixed(1) + '%' : ''}</td>
-      <td>${esc(item.reason ? discrepancyReasonConfig[item.reason] : '')}</td>
+      <td style="text-align:right">${item.quantity}</td>
+      <td style="text-align:right">${item.unitPrice != null ? fmtVnd(item.unitPrice) : ''}</td>
+      <td style="text-align:right">${fmtVnd(lineTotal)}</td>
+      <td>${esc(item.batchNumber)}</td>
+      <td>${item.mfgDate ? formatDate(item.mfgDate) : ''}</td>
+      <td>${item.expiryDate ? formatDate(item.expiryDate) : ''}</td>
       <td>${esc(item.note)}</td>
-    </tr>
-  `).join('')
+    </tr>`
+  }).join('')
+
+  const totalValue = form.totalValue ?? form.items.reduce((s, i) => s + (i.unitPrice ?? 0) * i.quantity, 0)
 
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Phiếu kiểm kho ${esc(form.code)}</title>
+  <title>Phiếu nhập kho ${esc(form.code)}</title>
   <style>
     body { font-family: Arial, sans-serif; font-size: 12px; padding: 24px; color: #000; }
     h1 { text-align: center; font-size: 18px; text-transform: uppercase; margin-bottom: 4px; }
     .code { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
     .info-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
     .info-table td { padding: 3px 8px; width: 50%; }
-    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     .items-table th, .items-table td { border: 1px solid #888; padding: 5px 8px; }
     .items-table th { background: #f0f0f0; font-weight: bold; }
+    .total-row { text-align: right; font-weight: bold; font-size: 13px; margin-bottom: 32px; }
     .sign-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; margin-top: 40px; }
     .sign-block p { margin: 0 0 4px; font-weight: bold; }
     .sign-block .note { font-size: 11px; color: #555; }
@@ -51,16 +54,18 @@ export function buildPrintHtml(form: BalanceForm): string {
   </style>
 </head>
 <body>
-  <h1>Biên bản kiểm kho</h1>
+  <h1>Phiếu nhập kho</h1>
   <p class="code">${esc(form.code)}</p>
   <table class="info-table">
     <tbody>
-      <tr><td><strong>Loại kiểm:</strong></td><td>${esc(balanceTypeConfig[form.balanceType])}</td></tr>
-      <tr><td><strong>Phạm vi:</strong></td><td>${form.scope === 'full' ? 'Toàn bộ kho' : 'Một phần'}</td></tr>
-      <tr><td><strong>Ngày kiểm:</strong></td><td>${esc(formatDate(form.balanceDate))}</td></tr>
+      <tr><td><strong>Nhà cung cấp:</strong></td><td>${esc(form.supplierName)}</td></tr>
+      <tr><td><strong>Kho nhập:</strong></td><td>${esc(form.warehouseName)}</td></tr>
+      <tr><td><strong>Ngày nhập:</strong></td><td>${esc(formatDate(form.importDate))}</td></tr>
+      <tr><td><strong>Số PO:</strong></td><td>${esc(form.poNumber)}</td></tr>
+      <tr><td><strong>Số hóa đơn:</strong></td><td>${esc(form.invoiceNumber)}</td></tr>
+      <tr><td><strong>Loại nhập:</strong></td><td>${esc(form.importType)}</td></tr>
       <tr><td><strong>Trạng thái:</strong></td><td>${esc(statusCfg.label)}</td></tr>
       <tr><td><strong>Người tạo:</strong></td><td>${esc(form.createdBy)}</td></tr>
-      <tr><td><strong>Người kiểm:</strong></td><td>${esc(form.inspectors.join(', '))}</td></tr>
       ${form.approvedBy ? `<tr><td><strong>Người phê duyệt:</strong></td><td>${esc(form.approvedBy)}</td></tr>` : ''}
       ${form.note ? `<tr><td colspan="2"><strong>Ghi chú:</strong> ${esc(form.note)}</td></tr>` : ''}
     </tbody>
@@ -70,24 +75,19 @@ export function buildPrintHtml(form: BalanceForm): string {
       <tr>
         <th style="width:36px">STT</th>
         <th>Nguyên vật liệu</th>
-        <th style="width:80px">Số lô</th>
-        <th style="width:100px">Tình trạng</th>
         <th style="width:50px">ĐVT</th>
-        <th style="width:70px;text-align:right">Sổ sách</th>
-        <th style="width:70px;text-align:right">Thực tế</th>
-        <th style="width:60px;text-align:right">CL</th>
-        <th style="width:60px;text-align:right">%</th>
-        <th style="width:120px">Nguyên nhân</th>
+        <th style="width:70px;text-align:right">SL nhập</th>
+        <th style="width:100px;text-align:right">Đơn giá</th>
+        <th style="width:110px;text-align:right">Thành tiền</th>
+        <th style="width:80px">Số lô</th>
+        <th style="width:80px">Ngày SX</th>
+        <th style="width:80px">Hạn SD</th>
         <th>Ghi chú</th>
       </tr>
     </thead>
     <tbody>${itemRows}</tbody>
   </table>
-  ${form.totalDiscrepancyValue != null
-    ? `<div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:24px">
-        Tổng giá trị chênh lệch: ${form.totalDiscrepancyValue > 0 ? '+' : ''}${new Intl.NumberFormat('vi-VN').format(form.totalDiscrepancyValue)} đ
-       </div>`
-    : ''}
+  <div class="total-row">Tổng giá trị: ${fmtVnd(totalValue)}</div>
   <div class="sign-grid">
     <div class="sign-block">
       <p>Người lập phiếu</p>
@@ -95,9 +95,9 @@ export function buildPrintHtml(form: BalanceForm): string {
       <div class="name">${esc(form.createdBy)}</div>
     </div>
     <div class="sign-block">
-      <p>Người kiểm kho</p>
+      <p>Thủ kho</p>
       <span class="note">(Ký, ghi rõ họ tên)</span>
-      <div class="name">${form.inspectors.map(esc).join('<br/>')}</div>
+      <div class="name"></div>
     </div>
     <div class="sign-block">
       <p>Người phê duyệt</p>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Ban, CheckCircle, ImageIcon, Paperclip, Plus, X } from 'lucide-react'
+import { Ban, CheckCircle, ImageIcon, Paperclip, Plus, Printer, X } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/common/status-badge'
@@ -22,6 +22,7 @@ import { useMaterials } from '@/features/materials/hooks/use-materials'
 import { toast } from 'react-hot-toast'
 import { useImportFormDetail } from '../hooks/use-import-form-detail'
 import { importFormStatusConfig, formatDate } from '../import-form.utils'
+import { buildPrintHtml } from './import-form-print-view'
 import type { ImportFormItem } from '../types/import-form.types'
 
 interface LocalAddItem {
@@ -29,6 +30,7 @@ interface LocalAddItem {
   materialName: string
   unit: string
   quantity: number
+  unitPrice: number
   batchNumber: string
   mfgDate: string
   expiryDate: string
@@ -37,7 +39,7 @@ interface LocalAddItem {
 
 const emptyAddItem: LocalAddItem = {
   materialId: '', materialName: '', unit: '',
-  quantity: 1, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
+  quantity: 1, unitPrice: 0, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
 }
 
 const itemColumns: ColumnDef<ImportFormItem>[] = [
@@ -47,6 +49,24 @@ const itemColumns: ColumnDef<ImportFormItem>[] = [
     header: 'Số lượng',
     size: 100,
     cell: ({ row }) => `${row.original.quantity} ${row.original.unit}`,
+  },
+  {
+    accessorKey: 'unitPrice',
+    header: 'Đơn giá',
+    size: 120,
+    cell: ({ row }) =>
+      row.original.unitPrice != null
+        ? new Intl.NumberFormat('vi-VN').format(row.original.unitPrice) + ' đ'
+        : '—',
+  },
+  {
+    id: 'lineTotal',
+    header: 'Thành tiền',
+    size: 130,
+    cell: ({ row }) => {
+      const total = (row.original.unitPrice ?? 0) * row.original.quantity
+      return new Intl.NumberFormat('vi-VN').format(total) + ' đ'
+    },
   },
   {
     accessorKey: 'batchNumber',
@@ -118,6 +138,7 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
       materialName: addRowItem.materialName,
       unit: addRowItem.unit,
       quantity: addRowItem.quantity,
+      unitPrice: addRowItem.unitPrice ?? 0,
       batchNumber: addRowItem.batchNumber || undefined,
       mfgDate: addRowItem.mfgDate || undefined,
       expiryDate: addRowItem.expiryDate || undefined,
@@ -194,6 +215,17 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
   const statusCfg = importFormStatusConfig[form.status]
   const isDraft = form.status === 'draft'
 
+  function handlePrint() {
+    if (!form) return
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if (!win) return
+    win.document.write(buildPrintHtml(form))
+    win.document.close()
+    win.focus()
+    win.onafterprint = () => win.close()
+    win.print()
+  }
+
   return (
     <>
       {/* Sticky header */}
@@ -202,9 +234,15 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
           <h2 className="text-base font-semibold">{form.code}</h2>
           <StatusBadge label={statusCfg.label} variant={statusCfg.variant} />
         </div>
-        <DialogClose asChild>
-          <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
-        </DialogClose>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="h-4 w-4 mr-1.5" />
+            In phiếu
+          </Button>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon-sm"><X className="h-4 w-4" /></Button>
+          </DialogClose>
+        </div>
       </div>
 
       {/* Scrollable body */}
@@ -225,6 +263,14 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
             {form.note && (
               <InfoRow label="Ghi chú" value={form.note} className="col-span-2 sm:col-span-3" />
             )}
+            {form.totalValue != null && (
+              <div className="col-span-2 sm:col-span-3 pt-2 border-t">
+                <p className="text-xs text-muted-foreground mb-0.5">Tổng giá trị</p>
+                <p className="text-sm font-semibold text-primary">
+                  {new Intl.NumberFormat('vi-VN').format(form.totalValue)} đ
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -242,6 +288,21 @@ function DetailContent({ formId }: { formId: string; onClose: () => void }) {
               </Button>
             )}
           </div>
+
+          {form.status === 'draft' && (() => {
+            const now = Date.now()
+            const DAYS_30 = 30 * 24 * 60 * 60 * 1000
+            const nearExpiry = form.items.filter(
+              (i) => i.expiryDate && new Date(i.expiryDate).getTime() - now <= DAYS_30
+            )
+            if (nearExpiry.length === 0) return null
+            return (
+              <div className="rounded-md border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800 px-3 py-2 text-sm text-yellow-800 dark:text-yellow-300 mb-3">
+                <span className="font-medium">Cảnh báo HSD:</span>{' '}
+                {nearExpiry.map((i) => i.materialName).join(', ')} có hạn sử dụng còn dưới 30 ngày.
+              </div>
+            )
+          })()}
 
           {form.items.length === 0 && !showAddRow ? (
             <p className="text-sm text-muted-foreground py-4 text-center">Chưa có sản phẩm nào</p>

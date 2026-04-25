@@ -7,6 +7,7 @@ import { AppDialog, AppDialogFooter } from '@/components/common/app-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -72,6 +73,8 @@ export function MaterialDialog({
           minimumInventory: material.minimumInventory,
           maximumInventory: material.maximumInventory,
           supplierIds: material.supplierIds,
+          isExpiry: material.isExpiry,
+          location: material.location ?? '',
           conversions: material.conversions,
         })
         setConversions(material.conversions ?? [])
@@ -84,6 +87,8 @@ export function MaterialDialog({
           minimumInventory: 0,
           maximumInventory: 0,
           supplierIds: [],
+          isExpiry: false,
+          location: '',
           conversions: [],
         })
         setConversions([])
@@ -250,6 +255,28 @@ export function MaterialDialog({
                   {errors.maximumInventory && (
                     <p className="text-sm text-destructive">{errors.maximumInventory.message}</p>
                   )}
+                </div>
+
+                {/* Theo dõi HSD */}
+                <div className="col-span-2 flex items-center gap-2 pt-1">
+                  <Checkbox
+                    id="isExpiry"
+                    checked={watch('isExpiry') ?? false}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setValue('isExpiry', checked === true, { shouldValidate: true })}
+                  />
+                  <Label htmlFor="isExpiry" className="cursor-pointer">
+                    Theo dõi hạn sử dụng (HSD)
+                  </Label>
+                </div>
+
+                {/* Vị trí lưu kho */}
+                <div className="col-span-2 space-y-1">
+                  <Label htmlFor="location">Vị trí lưu kho</Label>
+                  <Input
+                    id="location"
+                    placeholder="VD: Kệ A1, Tủ lạnh B2"
+                    {...register('location')}
+                  />
                 </div>
               </div>
 

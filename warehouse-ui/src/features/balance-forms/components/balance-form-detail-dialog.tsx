@@ -203,6 +203,18 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
               <p className="text-xs text-muted-foreground mb-0.5">Người kiểm</p>
               <p className="text-sm font-medium">{form.inspectors.join(', ')}</p>
             </div>
+            {form.completedBy && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Người hoàn thành</p>
+                <p className="text-sm font-medium">{form.completedBy}</p>
+              </div>
+            )}
+            {form.approvedBy && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Người phê duyệt</p>
+                <p className="text-sm font-medium">{form.approvedBy}</p>
+              </div>
+            )}
             {form.note && (
               <div className="col-span-2 sm:col-span-3">
                 <p className="text-xs text-muted-foreground mb-0.5">Ghi chú</p>
@@ -213,6 +225,15 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
               <div className="col-span-2 sm:col-span-3">
                 <p className="text-xs text-muted-foreground mb-0.5">File đính kèm</p>
                 <p className="text-sm font-medium">{form.attachmentNames.join(', ')}</p>
+              </div>
+            )}
+            {form.totalDiscrepancyValue != null && (
+              <div className="col-span-2 sm:col-span-3 pt-2 border-t">
+                <p className="text-xs text-muted-foreground mb-0.5">Tổng giá trị chênh lệch</p>
+                <p className={`text-sm font-semibold ${form.totalDiscrepancyValue < 0 ? 'text-destructive' : 'text-green-600 dark:text-green-400'}`}>
+                  {form.totalDiscrepancyValue > 0 ? '+' : ''}
+                  {new Intl.NumberFormat('vi-VN').format(form.totalDiscrepancyValue)} đ
+                </p>
               </div>
             )}
           </div>
@@ -232,10 +253,24 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
           )}
 
           <div className="overflow-x-auto">
+            {(() => {
+              const criticalItems = editedItems.filter(
+                (i) => i.discrepancyPercent !== null && Math.abs(i.discrepancyPercent) > 10
+              )
+              if (criticalItems.length === 0) return null
+              return (
+                <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive mb-3">
+                  <span className="font-semibold">Cảnh báo chênh lệch &gt;10%:</span>{' '}
+                  {criticalItems.map((i) => `${i.materialName} (${i.discrepancyPercent?.toFixed(1)}%)`).join(', ')} — yêu cầu điều tra.
+                </div>
+              )
+            })()}
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
                   <th className="pb-2 text-left font-medium text-muted-foreground">NVL</th>
+                  <th className="pb-2 text-left font-medium text-muted-foreground w-24">Số lô</th>
+                  <th className="pb-2 text-left font-medium text-muted-foreground w-28">Tình trạng</th>
                   <th className="pb-2 text-left font-medium text-muted-foreground w-16">ĐVT</th>
                   <th className="pb-2 text-right font-medium text-muted-foreground w-24">Sổ sách</th>
                   <th className="pb-2 text-right font-medium text-muted-foreground w-28">Thực tế</th>
@@ -255,6 +290,19 @@ function DetailContent({ formId, onClose }: { formId: string; onClose: () => voi
                   return (
                     <tr key={item.id} className="border-b last:border-0">
                       <td className="py-2 pr-2">{item.materialName}</td>
+                      <td className="py-2 pr-2 text-muted-foreground text-xs">{item.lotNumber ?? '—'}</td>
+                      <td className="py-2 pr-2 text-xs">
+                        {isEditable ? (
+                          <Input
+                            placeholder="VD: Bình thường"
+                            value={item.goodsCondition ?? ''}
+                            onChange={(e) => updateItem(idx, 'goodsCondition', e.target.value)}
+                            className="h-7 text-xs w-28"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">{item.goodsCondition ?? '—'}</span>
+                        )}
+                      </td>
                       <td className="py-2 pr-2 text-muted-foreground">{item.unit}</td>
                       <td className="py-2 pr-2 text-right">{item.systemQuantity}</td>
                       <td className="py-2 pr-2">

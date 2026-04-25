@@ -102,6 +102,7 @@ describe('useMaterials', () => {
         minimumInventory: 20,
         maximumInventory: 200,
         supplierIds: [],
+        isExpiry: false,
       })
     })
     expect(res!.ok).toBe(true)
@@ -119,6 +120,7 @@ describe('useMaterials', () => {
         minimumInventory: 10,
         maximumInventory: 100,
         supplierIds: ['sup-001'],
+        isExpiry: true,
       })
     })
     expect(res!.ok).toBe(true)

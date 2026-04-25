@@ -29,6 +29,7 @@ let forms: ImportForm[] = [
         materialName: 'Cam tươi',
         unit: 'kg',
         quantity: 100,
+        unitPrice: 15000,
         batchNumber: 'L001',
         mfgDate: '2025-12-20',
         expiryDate: '2026-01-20',
@@ -52,6 +53,7 @@ let forms: ImportForm[] = [
     createdBy: 'Nguyễn Văn A',
     createdAt: '2025-12-22T09:00:00Z',
     updatedAt: '2025-12-22T10:00:00Z',
+    totalValue: 50 * 22000 + 30 * 35000,
     items: [
       {
         id: 'item-002',
@@ -59,6 +61,7 @@ let forms: ImportForm[] = [
         materialName: 'Đường kính trắng',
         unit: 'kg',
         quantity: 50,
+        unitPrice: 22000,
         batchNumber: 'L002',
         mfgDate: '2025-11-01',
         expiryDate: '2026-11-01',
@@ -69,6 +72,7 @@ let forms: ImportForm[] = [
         materialName: 'Sữa tươi không đường',
         unit: 'l',
         quantity: 30,
+        unitPrice: 35000,
         batchNumber: 'L003',
         mfgDate: '2025-12-15',
         expiryDate: '2026-01-15',
@@ -88,6 +92,7 @@ let forms: ImportForm[] = [
     requestedBy: 'Nguyễn Văn A',
     createdBy: 'Nguyễn Văn A',
     createdAt: '2025-12-22T10:00:00Z',
+    totalValue: 10000,
     items: [],
   },
 ]
@@ -113,6 +118,8 @@ export const importFormHandlers = [
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = await request.json() as any
     const warehouse = WAREHOUSES.find((w) => w.id === body.warehouseId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newItems = (body.items ?? []).map((item: any) => ({ ...item, id: `item-${++itemCounter}` }))
     const newForm: ImportForm = {
       ...body,
       id: `pn-${Date.now()}`,
@@ -122,8 +129,8 @@ export const importFormHandlers = [
       requestedBy: 'Nguyễn Văn A',
       createdBy: 'Nguyễn Văn A',
       createdAt: new Date().toISOString(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      items: (body.items ?? []).map((item: any) => ({ ...item, id: `item-${++itemCounter}` })),
+      totalValue: newItems.reduce((sum: number, i: { unitPrice?: number; quantity: number }) => sum + (i.unitPrice ?? 0) * i.quantity, 0),
+      items: newItems,
     }
     forms = [...forms, newForm]
     return HttpResponse.json<ApiResponse<ImportForm>>(
