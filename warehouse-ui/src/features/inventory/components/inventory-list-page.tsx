@@ -49,7 +49,7 @@ function exportToCSV(items: InventoryItem[]) {
     String(item.maxThreshold),
   ])
   const csv = [headers, ...rows]
-    .map((row) => row.map((v) => `"${v.replace(/"/g, '""')}"`).join(','))
+    .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
     .join('\n')
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -108,15 +108,7 @@ export function InventoryListPage() {
   )
 
   return (
-    <PageContainer
-      title="Tồn kho"
-      actions={
-        <Button size="sm" onClick={() => exportToCSV(filteredItems)}>
-          <Download className="h-4 w-4 mr-1.5" />
-          Xuất file
-        </Button>
-      }
-    >
+    <PageContainer title="Tồn kho">
       <DataTable
         columns={columns}
         data={filteredItems}
@@ -172,6 +164,11 @@ export function InventoryListPage() {
                 <SelectItem value="high">Tồn cao</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button variant="outline" size="sm" className="h-9" onClick={() => exportToCSV(filteredItems)}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Xuất file
+            </Button>
           </>
         }
       />
