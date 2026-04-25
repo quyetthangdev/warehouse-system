@@ -83,14 +83,14 @@ export function getColumns({ onNavigate }: GetColumnsArgs): ColumnDef<InventoryI
         const isWarning = count > 0 && msLeft > DAYS_30 && msLeft <= DAYS_90
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={isCritical ? 'text-destructive font-medium' : isWarning ? 'text-yellow-600' : ''}>
+            <span className={isCritical ? 'text-destructive font-medium' : isWarning ? 'text-yellow-600 dark:text-yellow-400' : ''}>
               {formatted}
             </span>
             {isCritical && (
-              <Badge variant="destructive" className="text-xs px-1 py-0 h-4">Sắp HH</Badge>
+              <Badge variant="destructive" className="text-xs px-1 py-0 h-4">Sắp HH · {count} lô</Badge>
             )}
             {isWarning && (
-              <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-yellow-400 text-yellow-600">
+              <Badge variant="outline" className="text-xs px-1 py-0 h-4 border-yellow-400 dark:border-yellow-500 text-yellow-600 dark:text-yellow-400">
                 {count} lô
               </Badge>
             )}
