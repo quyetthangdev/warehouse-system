@@ -27,7 +27,7 @@ export function usePayments() {
       ])
       setPayments(paymentsData.data)
       setReceipts(receiptsData.data)
-    } catch (err: unknown) {
+    } catch {
       setError('Không thể tải dữ liệu thu chi')
     } finally {
       setIsLoading(false)
