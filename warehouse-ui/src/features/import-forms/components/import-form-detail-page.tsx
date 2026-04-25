@@ -29,6 +29,7 @@ interface LocalAddItem {
   materialName: string
   unit: string
   quantity: number
+  unitPrice: number
   batchNumber: string
   mfgDate: string
   expiryDate: string
@@ -37,7 +38,7 @@ interface LocalAddItem {
 
 const emptyAddItem: LocalAddItem = {
   materialId: '', materialName: '', unit: '',
-  quantity: 1, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
+  quantity: 1, unitPrice: 0, batchNumber: '', mfgDate: '', expiryDate: '', note: '',
 }
 
 const itemColumns: ColumnDef<ImportFormItem>[] = [
@@ -125,6 +126,7 @@ export function ImportFormDetailPage() {
       materialName: addRowItem.materialName,
       unit: addRowItem.unit,
       quantity: addRowItem.quantity,
+      unitPrice: addRowItem.unitPrice,
       batchNumber: addRowItem.batchNumber || undefined,
       mfgDate: addRowItem.mfgDate || undefined,
       expiryDate: addRowItem.expiryDate || undefined,

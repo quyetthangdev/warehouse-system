@@ -6,6 +6,7 @@ export interface ImportFormItem {
   materialName: string
   unit: string
   quantity: number
+  unitPrice: number
   batchNumber?: string
   mfgDate?: string
   expiryDate?: string
@@ -26,6 +27,7 @@ export interface ImportForm {
   note?: string
   invoiceImageName?: string
   attachmentNames?: string[]
+  totalValue?: number
   status: ImportFormStatus
   requestedBy: string
   approvedBy?: string

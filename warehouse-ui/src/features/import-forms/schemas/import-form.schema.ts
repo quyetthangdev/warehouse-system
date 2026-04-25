@@ -5,6 +5,7 @@ export const importFormItemSchema = z.object({
   materialName: z.string(),
   unit: z.string(),
   quantity: z.number().positive(),
+  unitPrice: z.number().min(0, 'Đơn giá phải >= 0'),
   batchNumber: z.string().optional(),
   mfgDate: z.string().optional(),
   expiryDate: z.string().optional(),

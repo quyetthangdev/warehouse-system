@@ -24,15 +24,21 @@ import type { BalanceForm, BalanceFormStatus, BalanceType } from '../types/balan
 import type { BalanceFormValues } from '../schemas/balance-form.schema'
 
 function exportToCSV(forms: BalanceForm[]) {
-  const headers = ['Mã phiếu', 'Ngày kiểm', 'Loại kiểm', 'Phạm vi', 'Người kiểm', 'Trạng thái', 'Số NVL']
+  const headers = [
+    'Mã phiếu', 'Loại kiểm', 'Phạm vi', 'Ngày kiểm', 'Trạng thái',
+    'Người tạo', 'Người kiểm', 'Người phê duyệt', 'Tổng CL giá trị', 'Ghi chú',
+  ]
   const rows = forms.map((f) => [
     f.code,
-    f.balanceDate,
     balanceTypeConfig[f.balanceType],
     f.scope === 'full' ? 'Toàn bộ' : 'Một phần',
-    f.inspectors.join('; '),
+    f.balanceDate,
     balanceFormStatusConfig[f.status].label,
-    String(f.items.length),
+    f.createdBy,
+    f.inspectors.join('; '),
+    f.approvedBy ?? '',
+    f.totalDiscrepancyValue != null ? String(f.totalDiscrepancyValue) : '',
+    f.note ?? '',
   ])
   const csv = [headers, ...rows]
     .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))

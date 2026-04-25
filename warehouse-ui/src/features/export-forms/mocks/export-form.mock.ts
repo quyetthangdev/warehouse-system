@@ -11,12 +11,13 @@ export const mockExportForms: ExportForm[] = [
     status: 'confirmed',
     approvedBy: 'Nguyễn Văn B',
     note: 'Xuất cho ca sáng',
+    totalValue: 5 * 15000 + 2 * 22000,
     createdBy: 'Nguyễn Văn A',
     createdAt: '2025-12-22T07:00:00Z',
     updatedAt: '2025-12-22T08:00:00Z',
     items: [
-      { id: 'eitem-001', materialId: 'mat-001', materialName: 'Cam tươi', unit: 'kg', quantity: 5, expiryDate: '2026-01-20' },
-      { id: 'eitem-002', materialId: 'mat-002', materialName: 'Đường kính trắng', unit: 'kg', quantity: 2, expiryDate: '2026-11-01' },
+      { id: 'eitem-001', materialId: 'mat-001', materialName: 'Cam tươi', unit: 'kg', quantity: 5, unitPrice: 15000, expiryDate: '2026-01-20' },
+      { id: 'eitem-002', materialId: 'mat-002', materialName: 'Đường kính trắng', unit: 'kg', quantity: 2, unitPrice: 22000, expiryDate: '2026-11-01' },
     ],
   },
   {
@@ -31,7 +32,7 @@ export const mockExportForms: ExportForm[] = [
     createdBy: 'Nguyễn Văn A',
     createdAt: '2025-12-23T09:00:00Z',
     items: [
-      { id: 'eitem-003', materialId: 'mat-003', materialName: 'Sữa tươi không đường', unit: 'l', quantity: 5, expiryDate: '2025-12-15' },
+      { id: 'eitem-003', materialId: 'mat-003', materialName: 'Sữa tươi không đường', unit: 'l', quantity: 5, unitPrice: 35000, expiryDate: '2025-12-15' },
     ],
   },
   {
@@ -58,7 +59,7 @@ export const mockExportForms: ExportForm[] = [
     createdBy: 'Nguyễn Văn A',
     createdAt: '2025-12-25T11:00:00Z',
     items: [
-      { id: 'eitem-004', materialId: 'mat-001', materialName: 'Cam tươi', unit: 'kg', quantity: 1, expiryDate: '2026-01-20', note: 'Mẫu thử' },
+      { id: 'eitem-004', materialId: 'mat-001', materialName: 'Cam tươi', unit: 'kg', quantity: 1, unitPrice: 15000, expiryDate: '2026-01-20', note: 'Mẫu thử' },
     ],
   },
 ]

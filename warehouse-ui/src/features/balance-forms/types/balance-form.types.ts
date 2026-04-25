@@ -14,6 +14,8 @@ export interface BalanceFormItem {
   materialId: string
   materialName: string
   unit: string
+  lotNumber?: string
+  goodsCondition?: string
   systemQuantity: number
   actualQuantity: number | null
   discrepancy: number | null
@@ -32,6 +34,8 @@ export interface BalanceForm {
   balanceDate: string
   createdBy: string
   inspectors: string[]
+  approvedBy?: string
+  totalDiscrepancyValue?: number
   note?: string
   attachmentNames?: string[]
   items: BalanceFormItem[]

@@ -43,7 +43,12 @@ export function getColumns({ canEdit, canDelete, onEdit, onDelete }: GetColumnsA
       header: ({ column }) => <DataTableColumnHeader column={column} title="NVL" />,
       cell: ({ row }) => (
         <div>
-          <div className="font-medium">{row.original.name}</div>
+          <div className="flex items-center gap-1.5 font-medium">
+            {row.original.name}
+            {row.original.isExpiry && (
+              <span title="Theo dõi HSD" className="text-xs text-yellow-600 dark:text-yellow-400">⏱</span>
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">{row.original.code}</div>
         </div>
       ),
@@ -56,6 +61,16 @@ export function getColumns({ canEdit, canDelete, onEdit, onDelete }: GetColumnsA
         const opt = CATEGORY_OPTIONS.find((o) => o.value === row.original.category)
         return <Badge variant="outline">{opt?.label ?? row.original.category}</Badge>
       },
+    },
+    {
+      accessorKey: 'location',
+      meta: { label: 'Vị trí' },
+      size: 120,
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Vị trí" />,
+      cell: ({ row }) =>
+        row.original.location
+          ? <span className="text-sm">{row.original.location}</span>
+          : <span className="text-muted-foreground">—</span>,
     },
     {
       accessorKey: 'maximumInventory',

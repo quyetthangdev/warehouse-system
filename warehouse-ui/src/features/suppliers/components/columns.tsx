@@ -1,5 +1,5 @@
 import { type ColumnDef } from '@tanstack/react-table'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -22,11 +22,12 @@ const paymentTermsLabel: Record<string, string> = {
 interface GetColumnsArgs {
   canEdit: boolean
   canDelete: boolean
+  onViewDetail: (supplier: Supplier) => void
   onEdit: (supplier: Supplier) => void
   onDelete: (supplier: Supplier) => void
 }
 
-export function getColumns({ canEdit, canDelete, onEdit, onDelete }: GetColumnsArgs): ColumnDef<Supplier>[] {
+export function getColumns({ canEdit, canDelete, onViewDetail, onEdit, onDelete }: GetColumnsArgs): ColumnDef<Supplier>[] {
   return [
     {
       accessorKey: 'name',
@@ -72,6 +73,10 @@ export function getColumns({ canEdit, canDelete, onEdit, onDelete }: GetColumnsA
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onViewDetail(row.original)}>
+              <Eye className="h-4 w-4" />
+              Xem chi tiết
+            </DropdownMenuItem>
             {canEdit && (
               <DropdownMenuItem onClick={() => onEdit(row.original)}>
                 <Pencil className="h-4 w-4" />

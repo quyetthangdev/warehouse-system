@@ -30,6 +30,8 @@ export interface Material {
   nearestExpiryDate: string | null
   availableStock: number
   conversions: UnitConversion[]
+  isExpiry: boolean
+  location?: string
 }
 
 export interface CreateMaterialRequest {
@@ -39,6 +41,8 @@ export interface CreateMaterialRequest {
   minimumInventory: number
   maximumInventory: number
   supplierIds: string[]
+  isExpiry: boolean
+  location?: string
   conversions?: UnitConversion[]
 }
 

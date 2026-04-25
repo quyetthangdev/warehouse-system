@@ -2,9 +2,14 @@
 import { exportTypeConfig, exportFormStatusConfig, disposalReasonConfig, formatDate } from '../export-form.utils'
 import type { ExportForm } from '../types/export-form.types'
 
+function fmtVnd(n: number): string {
+  return new Intl.NumberFormat('vi-VN').format(n) + ' đ'
+}
+
 export function buildPrintHtml(form: ExportForm): string {
   const statusCfg = exportFormStatusConfig[form.status]
   const typeCfg = exportTypeConfig[form.exportType]
+  const totalValue = form.totalValue ?? form.items.reduce((s, i) => s + (i.unitPrice ?? 0) * i.quantity, 0)
 
   const infoRows = [
     `<tr><td><strong>Loại xuất:</strong></td><td>${typeCfg?.label ?? form.exportType}</td></tr>`,
@@ -40,6 +45,8 @@ export function buildPrintHtml(form: ExportForm): string {
       <td>${item.materialName}</td>
       <td style="text-align:right">${item.quantity}</td>
       <td>${item.unit}</td>
+      <td style="text-align:right">${item.unitPrice != null ? fmtVnd(item.unitPrice) : ''}</td>
+      <td style="text-align:right">${fmtVnd((item.unitPrice ?? 0) * item.quantity)}</td>
       <td>${formatDate(item.expiryDate)}</td>
       <td>${item.note ?? ''}</td>
     </tr>
@@ -77,12 +84,17 @@ export function buildPrintHtml(form: ExportForm): string {
         <th>Nguyên vật liệu</th>
         <th style="width:80px;text-align:right">Số lượng</th>
         <th style="width:60px">Đơn vị</th>
+        <th style="width:100px;text-align:right">Đơn giá</th>
+        <th style="width:110px;text-align:right">Thành tiền</th>
         <th style="width:90px">Hạn SD</th>
         <th>Ghi chú</th>
       </tr>
     </thead>
     <tbody>${itemRows}</tbody>
   </table>
+  <div style="text-align:right;font-weight:bold;font-size:13px;margin-bottom:32px">
+    Tổng giá trị: ${fmtVnd(totalValue)}
+  </div>
   <div class="sign-grid">
     <div class="sign-block">
       <p>Người lập phiếu</p>

@@ -19,6 +19,8 @@ export const materialSchema = z
     minimumInventory: z.number({ invalid_type_error: 'Nhập số' }).min(0, 'Tối thiểu là 0'),
     maximumInventory: z.number({ invalid_type_error: 'Nhập số' }).min(0, 'Tối thiểu là 0'),
     supplierIds: z.array(z.string()),
+    isExpiry: z.boolean().default(false),
+    location: z.string().optional(),
     conversions: z.array(unitConversionSchema).optional(),
   })
   .refine((d) => d.maximumInventory >= d.minimumInventory, {

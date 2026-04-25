@@ -10,6 +10,7 @@ export interface ExportFormItem {
   materialName: string
   unit: string
   quantity: number
+  unitPrice?: number
   expiryDate: string
   note?: string
 }
@@ -25,6 +26,7 @@ export interface ExportForm {
   recipient?: string
   note?: string
   attachmentNames?: string[]
+  totalValue?: number
   // disposal-specific
   disposalReason?: DisposalReason
   disposalReasonText?: string
