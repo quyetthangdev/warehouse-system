@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
-import { Package, BarChart2, AlertTriangle, Clock, Search, Download, Bell } from 'lucide-react'
+import { Package, BarChart2, AlertTriangle, Clock, Search, Download } from 'lucide-react'
 import { PageContainer } from '@/components/layout/page-container'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -13,6 +12,7 @@ import type { Notification } from '@/stores/notification.store'
 import { useDashboard } from '../hooks/use-dashboard'
 import { StatsCard } from './stats-card'
 import { CostChart } from './cost-chart'
+import { AlertPanel } from './alert-panel'
 
 function formatVnd(value: number) {
   return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
@@ -62,15 +62,9 @@ export function DashboardPage() {
     <PageContainer
       title="Tổng quan"
       actions={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.success('Thành công!')}>
-            <Bell className="h-4 w-4 mr-1.5" />
-            Test Toast
-          </Button>
-          <FilterDropdown
-            onApply={({ frequency }) => setSelectedDays(Number(frequency))}
-          />
-        </div>
+        <FilterDropdown
+          onApply={({ frequency }) => setSelectedDays(Number(frequency))}
+        />
       }
     >
       <div className="space-y-4">
@@ -101,6 +95,8 @@ export function DashboardPage() {
             iconColor="orange"
           />
         </div>
+
+        <AlertPanel />
 
         <CostChart title="Biểu đồ nhập kho" data={importChart} filterLabel={filterLabel} />
         <CostChart title="Biểu đồ xuất kho" data={exportChart} filterLabel={filterLabel} />
