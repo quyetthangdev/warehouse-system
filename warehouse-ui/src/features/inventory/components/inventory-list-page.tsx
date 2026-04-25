@@ -17,6 +17,48 @@ import { PageContainer } from '@/components/layout/page-container'
 import { useInventory } from '../hooks/use-inventory'
 import { getColumns } from './columns'
 import type { MaterialCategory } from '@/features/materials/types/material.types'
+import type { InventoryItem } from '../types/inventory.types'
+
+function exportToCSV(items: InventoryItem[]) {
+  const headers = [
+    'Mã NVL', 'Tên NVL', 'Phân loại', 'Tồn khả dụng', 'ĐVT',
+    'Giá trị tồn (VNĐ)', 'Trạng thái', 'Ngưỡng tối thiểu', 'Ngưỡng tối đa',
+  ]
+  const categoryLabel: Record<string, string> = {
+    main_ingredient: 'Nguyên liệu chính',
+    supporting: 'Nguyên liệu phụ',
+    packaging: 'Bao bì',
+    consumable: 'Vật tư tiêu hao',
+    spare_part: 'Phụ tùng',
+  }
+  const statusLabel: Record<string, string> = {
+    out: 'Hết hàng',
+    low: 'Tồn thấp',
+    normal: 'Bình thường',
+    high: 'Tồn cao',
+  }
+  const rows = items.map((item) => [
+    item.materialCode,
+    item.materialName,
+    categoryLabel[item.category] ?? item.category,
+    String(item.currentStock),
+    item.unit,
+    String(item.stockValue),
+    statusLabel[item.status] ?? item.status,
+    String(item.minThreshold),
+    String(item.maxThreshold),
+  ])
+  const csv = [headers, ...rows]
+    .map((row) => row.map((v) => `"${v.replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `ton-kho-${new Date().toISOString().split('T')[0]}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
 
 const CATEGORY_OPTIONS: { value: MaterialCategory; label: string }[] = [
   { value: 'main_ingredient', label: 'Nguyên liệu chính' },
@@ -69,7 +111,7 @@ export function InventoryListPage() {
     <PageContainer
       title="Tồn kho"
       actions={
-        <Button size="sm">
+        <Button size="sm" onClick={() => exportToCSV(filteredItems)}>
           <Download className="h-4 w-4 mr-1.5" />
           Xuất file
         </Button>
