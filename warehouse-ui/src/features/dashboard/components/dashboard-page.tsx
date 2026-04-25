@@ -12,7 +12,7 @@ import type { Notification } from '@/stores/notification.store'
 import { useDashboard } from '../hooks/use-dashboard'
 import { StatsCard } from './stats-card'
 import { CostChart } from './cost-chart'
-import { AlertPanel } from './alert-panel'
+// import { AlertPanel } from './alert-panel'
 
 function formatVnd(value: number) {
   return new Intl.NumberFormat('vi-VN').format(value) + ' đ'
@@ -96,13 +96,13 @@ export function DashboardPage() {
           />
         </div>
 
-        <AlertPanel />
+        {/* <AlertPanel /> */}
 
         <CostChart title="Biểu đồ nhập kho" data={importChart} filterLabel={filterLabel} />
         <CostChart title="Biểu đồ xuất kho" data={exportChart} filterLabel={filterLabel} />
 
         {/* Inventory table */}
-        <div className="rounded-md border bg-card">
+        <div className="rounded-xl bg-card">
           <div className="p-4">
             <p className="mb-4 text-sm font-medium">Danh sách tồn kho</p>
             <div className="mb-4 flex items-center gap-2">

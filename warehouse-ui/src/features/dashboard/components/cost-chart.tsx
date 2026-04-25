@@ -17,8 +17,8 @@ function formatVnd(value: number) {
 function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md">
-      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
+    <div className="rounded-xl bg-card px-3 py-2 shadow-lg ring-1 ring-border">
+      <p className="mb-0.5 text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold text-foreground">{formatVnd(payload[0].value ?? 0)}</p>
     </div>
   )
@@ -26,7 +26,7 @@ function ChartTooltip({ active, payload, label }: TooltipProps<number, string>) 
 
 export function CostChart({ title, data, filterLabel }: CostChartProps) {
   return (
-    <div className="rounded-md border bg-card p-4">
+    <div className="rounded-xl bg-card p-4">
       <p className="text-sm font-medium">{title}</p>
       <p className="mb-4 text-xs text-muted-foreground">
         {filterLabel ? `${filterLabel} — Giá trị (nghìn đồng)` : 'Giá trị (nghìn đồng)'}
@@ -44,8 +44,13 @@ export function CostChart({ title, data, filterLabel }: CostChartProps) {
               axisLine={false}
               width={64}
             />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'oklch(0 0 0 / 0.04)' }} />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            <Tooltip
+              content={<ChartTooltip />}
+              cursor={{ fill: 'oklch(0 0 0 / 0.04)' }}
+              animationDuration={0}
+              isAnimationActive={false}
+            />
+            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>
