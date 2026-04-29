@@ -32,6 +32,32 @@ describe('paymentSchema', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('rejects whitespace-only importFormRef for material_purchase', () => {
+    const result = paymentSchema.safeParse({
+      paymentDate: '2026-01-01',
+      paymentType: 'material_purchase',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      paymentTerms: 'direct',
+      paymentMethod: 'cash',
+      importFormRef: '   ',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('passes when material_purchase has a valid importFormRef', () => {
+    const result = paymentSchema.safeParse({
+      paymentDate: '2026-01-01',
+      paymentType: 'material_purchase',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      paymentTerms: 'direct',
+      paymentMethod: 'cash',
+      importFormRef: 'PN-2025-001',
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('receiptSchema', () => {
@@ -94,6 +120,18 @@ describe('receiptSchema', () => {
       vatPercent: 0,
       receiptMethod: 'cash',
       reason: 'Bán bao bì',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('does not require formRef for other type', () => {
+    const result = receiptSchema.safeParse({
+      receiptDate: '2026-01-01',
+      receiptType: 'other',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      receiptMethod: 'cash',
+      reason: 'Thu khác',
     })
     expect(result.success).toBe(true)
   })

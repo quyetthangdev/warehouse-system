@@ -39,9 +39,8 @@ export const receiptSchema = z
     note: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    const requiresRef = ['refund', 'compensation', 'liquidation'] as const
     if (
-      (requiresRef as readonly string[]).includes(data.receiptType) &&
+      ['refund', 'compensation', 'liquidation'].includes(data.receiptType) &&
       !data.formRef?.trim()
     ) {
       ctx.addIssue({
