@@ -1,5 +1,7 @@
 import type { PaymentStatus, PaymentType, ReceiptType, PaymentTerms, PaymentMethod, ReceiptMethod } from './types/payment.types'
 
+export const RECEIPT_TYPES_REQUIRING_REF: ReceiptType[] = ['refund', 'compensation', 'liquidation']
+
 export const paymentTypeConfig: Record<PaymentType, string> = {
   material_purchase: 'Mua NVL',
   transport: 'Vận chuyển',

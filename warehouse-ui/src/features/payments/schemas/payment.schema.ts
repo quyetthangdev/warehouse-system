@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { RECEIPT_TYPES_REQUIRING_REF } from '../payment.utils'
 
 export const paymentSchema = z
   .object({
@@ -14,6 +15,7 @@ export const paymentSchema = z
     importFormRef: z.string().optional(),
     reason: z.string().optional(),
     note: z.string().optional(),
+    attachments: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.paymentType === 'material_purchase' && !data.importFormRef?.trim()) {
@@ -21,6 +23,13 @@ export const paymentSchema = z
         code: z.ZodIssueCode.custom,
         path: ['importFormRef'],
         message: 'Loại "Mua NVL" bắt buộc phải có tham chiếu phiếu nhập',
+      })
+    }
+    if (data.paymentType === 'material_purchase' && (!data.attachments || data.attachments.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['attachments'],
+        message: 'Loại "Mua NVL" bắt buộc phải đính kèm chứng từ',
       })
     }
   })
@@ -37,16 +46,27 @@ export const receiptSchema = z
     formRef: z.string().optional(),
     reason: z.string().min(1, 'Nhập lý do thu'),
     note: z.string().optional(),
+    attachments: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     if (
-      ['refund', 'compensation', 'liquidation'].includes(data.receiptType) &&
+      RECEIPT_TYPES_REQUIRING_REF.includes(data.receiptType) &&
       !data.formRef?.trim()
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['formRef'],
         message: 'Loại này bắt buộc phải có tham chiếu phiếu nhập/xuất',
+      })
+    }
+    if (
+      RECEIPT_TYPES_REQUIRING_REF.includes(data.receiptType) &&
+      (!data.attachments || data.attachments.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['attachments'],
+        message: 'Loại này bắt buộc phải đính kèm chứng từ',
       })
     }
   })

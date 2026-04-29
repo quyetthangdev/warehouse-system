@@ -55,6 +55,39 @@ describe('paymentSchema', () => {
       paymentTerms: 'direct',
       paymentMethod: 'cash',
       importFormRef: 'PN-2025-001',
+      attachments: ['invoice.pdf'],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('requires attachments when paymentType is material_purchase', () => {
+    const result = paymentSchema.safeParse({
+      paymentDate: '2026-01-01',
+      paymentType: 'material_purchase',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      paymentTerms: 'direct',
+      paymentMethod: 'cash',
+      importFormRef: 'PN-2025-001',
+      attachments: [],
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const attachErr = result.error.issues.find((i) => i.path.includes('attachments'))
+      expect(attachErr).toBeDefined()
+    }
+  })
+
+  it('passes when material_purchase has importFormRef and attachments', () => {
+    const result = paymentSchema.safeParse({
+      paymentDate: '2026-01-01',
+      paymentType: 'material_purchase',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      paymentTerms: 'direct',
+      paymentMethod: 'cash',
+      importFormRef: 'PN-2025-001',
+      attachments: ['invoice.pdf'],
     })
     expect(result.success).toBe(true)
   })
@@ -109,6 +142,24 @@ describe('receiptSchema', () => {
     if (!result.success) {
       const formRefError = result.error.issues.find((i) => i.path.includes('formRef'))
       expect(formRefError).toBeDefined()
+    }
+  })
+
+  it('requires attachments when receiptType is refund', () => {
+    const result = receiptSchema.safeParse({
+      receiptDate: '2026-01-01',
+      receiptType: 'refund',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      receiptMethod: 'cash',
+      reason: 'Hoàn tiền',
+      formRef: 'PN-2025-001',
+      attachments: [],
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const attachErr = result.error.issues.find((i) => i.path.includes('attachments'))
+      expect(attachErr).toBeDefined()
     }
   })
 

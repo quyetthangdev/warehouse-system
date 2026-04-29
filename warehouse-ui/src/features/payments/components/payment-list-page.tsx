@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react'
-import { Plus, Download, Ban, CheckCircle } from 'lucide-react'
+import { Plus, Download, Ban, CheckCircle, AlertTriangle, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { DataTable } from '@/components/common/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { AppDialog, AppDialogFooter } from '@/components/common/app-dialog'
 import { PageContainer } from '@/components/layout/page-container'
 import { useAuthStore } from '@/stores/auth.store'
 import { toast } from 'react-hot-toast'
@@ -17,10 +16,18 @@ import { PaymentDetailDialog } from './payment-detail-dialog'
 import { ReceiptDetailDialog } from './receipt-detail-dialog'
 import { getPaymentColumns } from './payment-columns'
 import { getReceiptColumns } from './receipt-columns'
+import { PaymentFilterDialog } from './payment-filter-dialog'
+import { ReceiptFilterDialog } from './receipt-filter-dialog'
 import {
-  paymentTypeConfig, receiptTypeConfig, paymentStatusConfig, formatVnd,
+  PAYMENT_FILTER_DEFAULT, RECEIPT_FILTER_DEFAULT,
+} from '../payment-filters'
+import type { PaymentFilterState, ReceiptFilterState } from '../payment-filters'
+import {
+  paymentTypeConfig, receiptTypeConfig, paymentStatusConfig, formatDate, formatVnd,
 } from '../payment.utils'
-import type { Payment, Receipt, PaymentStatus, PaymentType, ReceiptType } from '../types/payment.types'
+import { getDebtWarnings } from '../debt-warning'
+import type { DebtWarning } from '../debt-warning'
+import type { Payment, Receipt } from '../types/payment.types'
 import type { PaymentValues, ReceiptValues } from '../schemas/payment.schema'
 
 function exportPaymentsCSV(payments: Payment[]) {
@@ -63,6 +70,16 @@ function exportReceiptsCSV(receipts: Receipt[]) {
   URL.revokeObjectURL(url)
 }
 
+function countActiveFilters(f: PaymentFilterState | ReceiptFilterState): number {
+  let count = 0
+  if (f.fromDate || f.toDate) count++
+  if (f.type !== 'all') count++
+  if (f.status !== 'all') count++
+  if (f.supplier !== 'all') count++
+  if ('method' in f && f.method !== 'all') count++
+  return count
+}
+
 export function PaymentListPage() {
   const {
     payments, receipts, isLoading,
@@ -88,42 +105,64 @@ export function PaymentListPage() {
   const [isConfirmingReceipt, setIsConfirmingReceipt] = useState(false)
   const [isCancellingReceipt, setIsCancellingReceipt] = useState(false)
 
-  // Payment filters
-  const [paymentTypeFilter, setPaymentTypeFilter] = useState<PaymentType | 'all'>('all')
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatus | 'all'>('all')
+  const [activeTab, setActiveTab] = useState<'payments' | 'receipts'>('payments')
 
-  // Receipt filters
-  const [receiptTypeFilter, setReceiptTypeFilter] = useState<ReceiptType | 'all'>('all')
-  const [receiptStatusFilter, setReceiptStatusFilter] = useState<PaymentStatus | 'all'>('all')
+  // Filter state
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilterState>(PAYMENT_FILTER_DEFAULT)
+  const [receiptFilter, setReceiptFilter] = useState<ReceiptFilterState>(RECEIPT_FILTER_DEFAULT)
+  const [paymentFilterOpen, setPaymentFilterOpen] = useState(false)
+  const [receiptFilterOpen, setReceiptFilterOpen] = useState(false)
+
+  // Debt warning dialog
+  const [debtWarningOpen, setDebtWarningOpen] = useState(true)
 
   const filteredPayments = useMemo(() => {
+    const { fromDate, toDate, type, status, method, supplier } = paymentFilter
     return payments.filter((p) => {
-      if (paymentTypeFilter !== 'all' && p.paymentType !== paymentTypeFilter) return false
-      if (paymentStatusFilter !== 'all' && p.status !== paymentStatusFilter) return false
+      if (type !== 'all' && p.paymentType !== type) return false
+      if (status !== 'all' && p.status !== status) return false
+      if (fromDate && p.paymentDate < fromDate) return false
+      if (toDate && p.paymentDate > toDate) return false
+      if (method !== 'all' && p.paymentMethod !== method) return false
+      if (supplier !== 'all' && p.supplierId !== supplier) return false
       return true
     })
-  }, [payments, paymentTypeFilter, paymentStatusFilter])
+  }, [payments, paymentFilter])
 
   const filteredReceipts = useMemo(() => {
+    const { fromDate, toDate, type, status, supplier } = receiptFilter
     return receipts.filter((r) => {
-      if (receiptTypeFilter !== 'all' && r.receiptType !== receiptTypeFilter) return false
-      if (receiptStatusFilter !== 'all' && r.status !== receiptStatusFilter) return false
+      if (type !== 'all' && r.receiptType !== type) return false
+      if (status !== 'all' && r.status !== status) return false
+      if (fromDate && r.receiptDate < fromDate) return false
+      if (toDate && r.receiptDate > toDate) return false
+      if (supplier !== 'all' && r.supplierId !== supplier) return false
       return true
     })
-  }, [receipts, receiptTypeFilter, receiptStatusFilter])
+  }, [receipts, receiptFilter])
 
-  const confirmedPaymentsTotal = useMemo(
-    () => payments.filter((p) => p.status === 'confirmed').reduce((sum, p) => sum + p.totalAmount, 0),
-    [payments],
-  )
+  const debtWarnings = useMemo(() => getDebtWarnings(payments), [payments])
 
-  const confirmedReceiptsTotal = useMemo(
-    () => receipts.filter((r) => r.status === 'confirmed').reduce((sum, r) => sum + r.totalAmount, 0),
-    [receipts],
-  )
+  const paymentSummary = useMemo(() => {
+    const confirmed = filteredPayments.filter((p) => p.status === 'confirmed')
+    const draft = filteredPayments.filter((p) => p.status === 'draft')
+    const totalConfirmed = confirmed.reduce((sum, p) => sum + p.totalAmount, 0)
+    const totalDraft = draft.reduce((sum, p) => sum + p.totalAmount, 0)
+    const totalDebt = draft
+      .filter((p) => p.paymentTerms === 'debt')
+      .reduce((sum, p) => sum + p.totalAmount, 0)
+    return { totalConfirmed, totalDraft, totalDebt, confirmedCount: confirmed.length }
+  }, [filteredPayments])
 
-  const hasPaymentFilters = paymentTypeFilter !== 'all' || paymentStatusFilter !== 'all'
-  const hasReceiptFilters = receiptTypeFilter !== 'all' || receiptStatusFilter !== 'all'
+  const receiptSummary = useMemo(() => {
+    const confirmed = filteredReceipts.filter((r) => r.status === 'confirmed')
+    const totalConfirmed = confirmed.reduce((sum, r) => sum + r.totalAmount, 0)
+    const totalAll = filteredReceipts.reduce((sum, r) => sum + r.totalAmount, 0)
+    return { totalConfirmed, confirmedCount: confirmed.length, totalAll }
+  }, [filteredReceipts])
+
+  const paymentFilterCount = useMemo(() => countActiveFilters(paymentFilter), [paymentFilter])
+  const receiptFilterCount = useMemo(() => countActiveFilters(receiptFilter), [receiptFilter])
 
   const paymentColumns = useMemo(
     () => getPaymentColumns({
@@ -218,28 +257,60 @@ export function PaymentListPage() {
   }
 
   return (
-    <PageContainer title="Chi phí">
-      <Tabs defaultValue="payments">
-        <TabsList className="mb-4">
-          <TabsTrigger value="payments">
-            Phiếu Chi
-            {confirmedPaymentsTotal > 0 && (
-              <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-400">
-                {formatVnd(confirmedPaymentsTotal)}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="receipts">
-            Phiếu Thu
-            {confirmedReceiptsTotal > 0 && (
-              <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-400">
-                {formatVnd(confirmedReceiptsTotal)}
-              </span>
-            )}
-          </TabsTrigger>
+    <PageContainer
+      title="Chi phí"
+      actions={
+        canEdit ? (
+          activeTab === 'payments' ? (
+            <Button onClick={() => setPaymentDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Tạo phiếu chi
+            </Button>
+          ) : (
+            <Button onClick={() => setReceiptDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Tạo phiếu thu
+            </Button>
+          )
+        ) : undefined
+      }
+    >
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'payments' | 'receipts')}>
+        <TabsList>
+          <TabsTrigger value="payments">Phiếu Chi</TabsTrigger>
+          <TabsTrigger value="receipts">Phiếu Thu</TabsTrigger>
         </TabsList>
 
         <TabsContent value="payments">
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Đã xác nhận</p>
+              <p className="text-lg font-semibold mt-0.5">{formatVnd(paymentSummary.totalConfirmed)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{paymentSummary.confirmedCount} phiếu</p>
+            </div>
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Chờ duyệt</p>
+              <p className="text-lg font-semibold mt-0.5">{formatVnd(paymentSummary.totalDraft)}</p>
+            </div>
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                Tổng công nợ
+                {debtWarnings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setDebtWarningOpen(true)}
+                    className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 hover:underline"
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    {debtWarnings.length}
+                  </button>
+                )}
+              </p>
+              <p className="text-lg font-semibold text-amber-600 dark:text-amber-400 mt-0.5">
+                {formatVnd(paymentSummary.totalDebt)}
+              </p>
+            </div>
+          </div>
           <DataTable
             columns={paymentColumns}
             data={filteredPayments}
@@ -247,48 +318,31 @@ export function PaymentListPage() {
             searchPlaceholder="Tìm kiếm phiếu chi..."
             emptyMessage="Chưa có phiếu chi nào"
             filters={
-              <>
-                <Select
-                  value={paymentTypeFilter}
-                  onValueChange={(v) => setPaymentTypeFilter(v as PaymentType | 'all')}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  onClick={() => setPaymentFilterOpen(true)}
                 >
-                  <SelectTrigger className="w-36 h-9">
-                    <SelectValue placeholder="Loại chi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả loại</SelectItem>
-                    {(Object.entries(paymentTypeConfig) as [PaymentType, string][]).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={paymentStatusFilter}
-                  onValueChange={(v) => setPaymentStatusFilter(v as PaymentStatus | 'all')}
-                >
-                  <SelectTrigger className="w-36 h-9">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="draft">Nháp</SelectItem>
-                    <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                    <SelectItem value="cancelled">Đã hủy</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {hasPaymentFilters && (
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Bộ lọc
+                  {paymentFilterCount > 0 && (
+                    <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+                      {paymentFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+                {paymentFilterCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-9 px-2 text-muted-foreground"
-                    onClick={() => { setPaymentTypeFilter('all'); setPaymentStatusFilter('all') }}
+                    className="h-9 text-muted-foreground"
+                    onClick={() => setPaymentFilter(PAYMENT_FILTER_DEFAULT)}
                   >
-                    Xoá bộ lọc
+                    Xoá lọc
                   </Button>
                 )}
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -298,19 +352,27 @@ export function PaymentListPage() {
                   <Download className="h-4 w-4 mr-1.5" />
                   Xuất file
                 </Button>
-
-                {canEdit && (
-                  <Button size="sm" className="h-9" onClick={() => setPaymentDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    Tạo phiếu chi
-                  </Button>
-                )}
-              </>
+              </div>
             }
           />
         </TabsContent>
 
         <TabsContent value="receipts">
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Đã xác nhận</p>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400 mt-0.5">
+                {formatVnd(receiptSummary.totalConfirmed)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{receiptSummary.confirmedCount} phiếu</p>
+            </div>
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Tổng thu (lọc hiện tại)</p>
+              <p className="text-lg font-semibold mt-0.5">
+                {formatVnd(receiptSummary.totalAll)}
+              </p>
+            </div>
+          </div>
           <DataTable
             columns={receiptColumns}
             data={filteredReceipts}
@@ -318,48 +380,31 @@ export function PaymentListPage() {
             searchPlaceholder="Tìm kiếm phiếu thu..."
             emptyMessage="Chưa có phiếu thu nào"
             filters={
-              <>
-                <Select
-                  value={receiptTypeFilter}
-                  onValueChange={(v) => setReceiptTypeFilter(v as ReceiptType | 'all')}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  onClick={() => setReceiptFilterOpen(true)}
                 >
-                  <SelectTrigger className="w-40 h-9">
-                    <SelectValue placeholder="Loại thu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả loại</SelectItem>
-                    {(Object.entries(receiptTypeConfig) as [ReceiptType, string][]).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={receiptStatusFilter}
-                  onValueChange={(v) => setReceiptStatusFilter(v as PaymentStatus | 'all')}
-                >
-                  <SelectTrigger className="w-36 h-9">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="draft">Nháp</SelectItem>
-                    <SelectItem value="confirmed">Đã xác nhận</SelectItem>
-                    <SelectItem value="cancelled">Đã hủy</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {hasReceiptFilters && (
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Bộ lọc
+                  {receiptFilterCount > 0 && (
+                    <Badge variant="secondary" className="ml-0.5 h-5 px-1.5 text-xs">
+                      {receiptFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+                {receiptFilterCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-9 px-2 text-muted-foreground"
-                    onClick={() => { setReceiptTypeFilter('all'); setReceiptStatusFilter('all') }}
+                    className="h-9 text-muted-foreground"
+                    onClick={() => setReceiptFilter(RECEIPT_FILTER_DEFAULT)}
                   >
-                    Xoá bộ lọc
+                    Xoá lọc
                   </Button>
                 )}
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -369,18 +414,55 @@ export function PaymentListPage() {
                   <Download className="h-4 w-4 mr-1.5" />
                   Xuất file
                 </Button>
-
-                {canEdit && (
-                  <Button size="sm" className="h-9" onClick={() => setReceiptDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1.5" />
-                    Tạo phiếu thu
-                  </Button>
-                )}
-              </>
+              </div>
             }
           />
         </TabsContent>
       </Tabs>
+
+      {/* Debt warning dialog */}
+      <AppDialog
+        open={debtWarnings.length > 0 && debtWarningOpen}
+        onClose={() => setDebtWarningOpen(false)}
+        icon={AlertTriangle}
+        title={`Cảnh báo công nợ (${debtWarnings.length} phiếu)`}
+        description="Một số phiếu chi công nợ cần được chú ý:"
+      >
+        <ul className="text-sm space-y-1.5 max-h-48 overflow-y-auto">
+          {debtWarnings.map((w: DebtWarning) => (
+            <li key={w.id} className="flex items-start gap-2">
+              <span className={
+                w.type === 'overdue'
+                  ? 'text-destructive font-medium'
+                  : 'text-amber-600 dark:text-amber-400 font-medium'
+              }>
+                {w.type === 'overdue' ? 'Quá hạn' : 'Sắp hạn'}
+              </span>
+              <span className="text-muted-foreground">
+                {w.code} — {formatDate(w.dueDate)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <AppDialogFooter>
+          <Button type="button" onClick={() => setDebtWarningOpen(false)}>Đã hiểu</Button>
+        </AppDialogFooter>
+      </AppDialog>
+
+      {/* Filter dialogs */}
+      <PaymentFilterDialog
+        open={paymentFilterOpen}
+        filter={paymentFilter}
+        onApply={setPaymentFilter}
+        onClose={() => setPaymentFilterOpen(false)}
+      />
+
+      <ReceiptFilterDialog
+        open={receiptFilterOpen}
+        filter={receiptFilter}
+        onApply={setReceiptFilter}
+        onClose={() => setReceiptFilterOpen(false)}
+      />
 
       {/* Payment dialogs */}
       <PaymentDialog

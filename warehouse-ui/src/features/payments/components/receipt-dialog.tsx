@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { HandCoins } from 'lucide-react'
@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { useSuppliers } from '@/features/suppliers/hooks/use-suppliers'
 import { receiptSchema, type ReceiptValues } from '../schemas/payment.schema'
-import { receiptTypeConfig, receiptMethodConfig, formatVnd } from '../payment.utils'
+import { receiptTypeConfig, receiptMethodConfig, formatVnd, RECEIPT_TYPES_REQUIRING_REF } from '../payment.utils'
 import type { ReceiptType, ReceiptMethod } from '../types/payment.types'
 
 interface ReceiptDialogProps {
@@ -39,17 +40,30 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
     },
   })
 
+  const { suppliers } = useSuppliers()
+
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+
   const amountBeforeVat = watch('amountBeforeVat') ?? 0
   const vatPercent = watch('vatPercent') ?? 0
   const receiptMethod = watch('receiptMethod')
   const receiptType = watch('receiptType')
-  const isFormRefRequired = ['refund', 'compensation', 'liquidation'].includes(receiptType)
+  const isRefAndAttachmentRequired = RECEIPT_TYPES_REQUIRING_REF.includes(receiptType)
 
   const vatAmount = Math.round(amountBeforeVat * vatPercent / 100)
   const totalAmount = amountBeforeVat + vatAmount
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).map((f) => f.name)
+    setSelectedFiles(files)
+    setValue('attachments', files, { shouldValidate: true })
+  }
+
   useEffect(() => {
-    if (!open) reset()
+    if (!open) {
+      reset()
+      setSelectedFiles([])
+    }
   }, [open, reset])
 
   return (
@@ -64,7 +78,7 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
           <div className="space-y-1">
             <Label>Loại thu</Label>
             <Select
-              value={watch('receiptType')}
+              value={receiptType}
               onValueChange={(v) => setValue('receiptType', v as ReceiptType, { shouldValidate: true })}
             >
               <SelectTrigger aria-invalid={!!errors.receiptType}>
@@ -140,9 +154,26 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
         )}
 
         <div className="space-y-1">
+          <Label>Đối tác / NCC</Label>
+          <Select
+            value={watch('supplierId') ?? ''}
+            onValueChange={(v) => setValue('supplierId', v || undefined, { shouldValidate: true })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn đối tác (nếu có)" />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
           <Label htmlFor="formRef">
             Tham chiếu phiếu nhập/xuất
-            {isFormRefRequired && <span className="text-destructive ml-0.5">*</span>}
+            {isRefAndAttachmentRequired && <span className="text-destructive ml-0.5">*</span>}
           </Label>
           <Input
             id="formRef"
@@ -152,6 +183,29 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
           />
           {errors.formRef && (
             <p className="text-sm text-destructive">{errors.formRef.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="attachments">
+            Chứng từ đính kèm
+            {isRefAndAttachmentRequired && <span className="text-destructive ml-0.5">*</span>}
+          </Label>
+          <input
+            id="attachments"
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:text-foreground cursor-pointer"
+          />
+          {selectedFiles.length > 0 && (
+            <ul className="text-xs text-muted-foreground space-y-0.5 mt-1">
+              {selectedFiles.map((f) => <li key={f} className="truncate">• {f}</li>)}
+            </ul>
+          )}
+          {errors.attachments && (
+            <p className="text-sm text-destructive">{errors.attachments.message as string}</p>
           )}
         </div>
 

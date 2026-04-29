@@ -1,3 +1,4 @@
+import { Paperclip } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -7,6 +8,7 @@ import {
   receiptTypeConfig, paymentStatusConfig, receiptMethodConfig, formatVnd, formatDate,
 } from '../payment.utils'
 import type { Receipt } from '../types/payment.types'
+import { useAuthStore } from '@/stores/auth.store'
 
 interface ReceiptDetailDialogProps {
   receipt: Receipt | null
@@ -26,9 +28,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function ReceiptDetailDialog({ receipt, canEdit, onConfirm, onCancel, onClose }: ReceiptDetailDialogProps) {
+  const currentUserName = useAuthStore((s) => s.user?.fullName ?? '')
   if (!receipt) return null
   const cfg = paymentStatusConfig[receipt.status]
   const isDraft = receipt.status === 'draft'
+  const isSameAsCreator = currentUserName !== '' && currentUserName === receipt.createdBy
 
   return (
     <Dialog open={!!receipt} onOpenChange={(v) => { if (!v) onClose() }}>
@@ -59,6 +63,19 @@ export function ReceiptDetailDialog({ receipt, canEdit, onConfirm, onCancel, onC
           {receipt.approvedAt && (
             <Row label="Ngày phê duyệt" value={formatDate(receipt.approvedAt.split('T')[0])} />
           )}
+          {receipt.attachments && receipt.attachments.length > 0 && (
+            <div className="flex justify-between py-2 text-sm">
+              <span className="text-muted-foreground w-40 shrink-0">Chứng từ</span>
+              <ul className="text-right space-y-0.5">
+                {receipt.attachments.map((f) => (
+                  <li key={f} className="flex items-center justify-end gap-1.5 text-xs">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate max-w-[180px]">{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="gap-2">
@@ -66,7 +83,16 @@ export function ReceiptDetailDialog({ receipt, canEdit, onConfirm, onCancel, onC
           {canEdit && isDraft && (
             <>
               <Button variant="destructive" onClick={() => onCancel(receipt)}>Hủy phiếu</Button>
-              <Button onClick={() => onConfirm(receipt)}>Xác nhận</Button>
+              <div className="flex flex-col items-end gap-1">
+                {isSameAsCreator && (
+                  <p className="text-xs text-muted-foreground">
+                    Người tạo phiếu không thể tự phê duyệt
+                  </p>
+                )}
+                <Button onClick={() => onConfirm(receipt)} disabled={isSameAsCreator}>
+                  Xác nhận
+                </Button>
+              </div>
             </>
           )}
         </DialogFooter>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Wallet } from 'lucide-react'
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { useSuppliers } from '@/features/suppliers/hooks/use-suppliers'
 import { paymentSchema, type PaymentValues } from '../schemas/payment.schema'
 import { paymentTypeConfig, paymentMethodConfig, paymentTermsConfig, calcDueDate, formatVnd } from '../payment.utils'
 import type { PaymentType, PaymentMethod, PaymentTerms } from '../types/payment.types'
@@ -41,6 +42,10 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
     },
   })
 
+  const { suppliers } = useSuppliers()
+
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+
   const amountBeforeVat = watch('amountBeforeVat') ?? 0
   const vatPercent = watch('vatPercent') ?? 0
   const paymentTerms = watch('paymentTerms')
@@ -49,6 +54,7 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
   const paymentMethod = watch('paymentMethod')
   const paymentType = watch('paymentType')
   const isImportRefRequired = paymentType === 'material_purchase'
+  const isAttachmentRequired = paymentType === 'material_purchase'
 
   const vatAmount = Math.round(amountBeforeVat * vatPercent / 100)
   const totalAmount = amountBeforeVat + vatAmount
@@ -56,8 +62,17 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
     ? calcDueDate(paymentDate, debtDays)
     : null
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).map((f) => f.name)
+    setSelectedFiles(files)
+    setValue('attachments', files, { shouldValidate: true })
+  }
+
   useEffect(() => {
-    if (!open) reset()
+    if (!open) {
+      reset()
+      setSelectedFiles([])
+    }
   }, [open, reset])
 
   return (
@@ -72,7 +87,7 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
           <div className="space-y-1">
             <Label>Loại chi</Label>
             <Select
-              value={watch('paymentType')}
+              value={paymentType}
               onValueChange={(v) => setValue('paymentType', v as PaymentType, { shouldValidate: true })}
             >
               <SelectTrigger aria-invalid={!!errors.paymentType}>
@@ -191,6 +206,23 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
         )}
 
         <div className="space-y-1">
+          <Label>Nhà cung cấp</Label>
+          <Select
+            value={watch('supplierId') ?? ''}
+            onValueChange={(v) => setValue('supplierId', v || undefined, { shouldValidate: true })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Chọn NCC (nếu có)" />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
           <Label htmlFor="importFormRef">
             Tham chiếu phiếu nhập
             {isImportRefRequired && <span className="text-destructive ml-0.5">*</span>}
@@ -203,6 +235,29 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
           />
           {errors.importFormRef && (
             <p className="text-sm text-destructive">{errors.importFormRef.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="attachments">
+            Chứng từ đính kèm
+            {isAttachmentRequired && <span className="text-destructive ml-0.5">*</span>}
+          </Label>
+          <input
+            id="attachments"
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:text-foreground cursor-pointer"
+          />
+          {selectedFiles.length > 0 && (
+            <ul className="text-xs text-muted-foreground space-y-0.5 mt-1">
+              {selectedFiles.map((f) => <li key={f} className="truncate">• {f}</li>)}
+            </ul>
+          )}
+          {errors.attachments && (
+            <p className="text-sm text-destructive">{errors.attachments.message as string}</p>
           )}
         </div>
 

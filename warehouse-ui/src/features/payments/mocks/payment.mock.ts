@@ -21,6 +21,7 @@ export const MOCK_PAYMENTS: Payment[] = [
     approvedBy: 'Nguyễn Văn B',
     approvedAt: '2025-12-22T11:00:00Z',
     status: 'confirmed',
+    attachments: ['hoa-don-001.pdf'],
   },
   {
     id: 'pc-002',

@@ -42,6 +42,7 @@ export interface Payment {
   reason?: string
   note?: string
   status: PaymentStatus
+  attachments?: string[]
 }
 
 export interface Receipt {
@@ -65,4 +66,5 @@ export interface Receipt {
   reason: string
   note?: string
   status: PaymentStatus
+  attachments?: string[]
 }
