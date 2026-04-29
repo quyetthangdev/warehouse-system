@@ -52,6 +52,40 @@ describe('receiptSchema', () => {
     }
   })
 
+  it('requires formRef when receiptType is compensation', () => {
+    const result = receiptSchema.safeParse({
+      receiptDate: '2026-01-01',
+      receiptType: 'compensation',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      receiptMethod: 'cash',
+      reason: 'Bồi thường',
+      formRef: '',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const formRefError = result.error.issues.find((i) => i.path.includes('formRef'))
+      expect(formRefError).toBeDefined()
+    }
+  })
+
+  it('requires formRef when receiptType is liquidation', () => {
+    const result = receiptSchema.safeParse({
+      receiptDate: '2026-01-01',
+      receiptType: 'liquidation',
+      amountBeforeVat: 100000,
+      vatPercent: 0,
+      receiptMethod: 'cash',
+      reason: 'Thanh lý',
+      formRef: '',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const formRefError = result.error.issues.find((i) => i.path.includes('formRef'))
+      expect(formRefError).toBeDefined()
+    }
+  })
+
   it('does not require formRef for scrap type', () => {
     const result = receiptSchema.safeParse({
       receiptDate: '2026-01-01',
