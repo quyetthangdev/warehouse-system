@@ -47,6 +47,8 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
   const paymentDate = watch('paymentDate')
   const debtDays = watch('debtDays')
   const paymentMethod = watch('paymentMethod')
+  const paymentType = watch('paymentType')
+  const isImportRefRequired = paymentType === 'material_purchase'
 
   const vatAmount = Math.round(amountBeforeVat * vatPercent / 100)
   const totalAmount = amountBeforeVat + vatAmount
@@ -189,8 +191,19 @@ export function PaymentDialog({ open, onSubmit, onClose }: PaymentDialogProps) {
         )}
 
         <div className="space-y-1">
-          <Label htmlFor="importFormRef">Tham chiếu phiếu nhập</Label>
-          <Input id="importFormRef" placeholder="VD: PN-2025-001" {...register('importFormRef')} />
+          <Label htmlFor="importFormRef">
+            Tham chiếu phiếu nhập
+            {isImportRefRequired && <span className="text-destructive ml-0.5">*</span>}
+          </Label>
+          <Input
+            id="importFormRef"
+            placeholder="VD: PN-2025-001"
+            {...register('importFormRef')}
+            aria-invalid={!!errors.importFormRef}
+          />
+          {errors.importFormRef && (
+            <p className="text-sm text-destructive">{errors.importFormRef.message}</p>
+          )}
         </div>
 
         <div className="space-y-1">

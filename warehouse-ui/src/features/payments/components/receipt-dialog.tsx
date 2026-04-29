@@ -42,6 +42,8 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
   const amountBeforeVat = watch('amountBeforeVat') ?? 0
   const vatPercent = watch('vatPercent') ?? 0
   const receiptMethod = watch('receiptMethod')
+  const receiptType = watch('receiptType')
+  const isFormRefRequired = ['refund', 'compensation', 'liquidation'].includes(receiptType)
 
   const vatAmount = Math.round(amountBeforeVat * vatPercent / 100)
   const totalAmount = amountBeforeVat + vatAmount
@@ -138,8 +140,19 @@ export function ReceiptDialog({ open, onSubmit, onClose }: ReceiptDialogProps) {
         )}
 
         <div className="space-y-1">
-          <Label htmlFor="formRef">Tham chiếu phiếu nhập/xuất</Label>
-          <Input id="formRef" placeholder="VD: PN-2025-001" {...register('formRef')} />
+          <Label htmlFor="formRef">
+            Tham chiếu phiếu nhập/xuất
+            {isFormRefRequired && <span className="text-destructive ml-0.5">*</span>}
+          </Label>
+          <Input
+            id="formRef"
+            placeholder="VD: PN-2025-001"
+            {...register('formRef')}
+            aria-invalid={!!errors.formRef}
+          />
+          {errors.formRef && (
+            <p className="text-sm text-destructive">{errors.formRef.message}</p>
+          )}
         </div>
 
         <div className="space-y-1">
